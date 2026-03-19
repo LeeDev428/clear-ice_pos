@@ -8,6 +8,7 @@ use App\Http\Controllers\PosController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RecordController;
 use App\Http\Controllers\SaleController;
+use App\Http\Controllers\WaterRestockController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -29,6 +30,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('/expenses', [ExpenseController::class, 'store'])->name('expenses.store');
     Route::post('/inventory-counts', [InventoryCountController::class, 'store'])->name('inventory-counts.store');
+    Route::post('/water-restocks', [WaterRestockController::class, 'store'])->name('water-restocks.store');
     Route::post('/collections', [CollectionPaymentController::class, 'store'])->name('collections.store');
     Route::post('/payroll-entries', [PayrollController::class, 'store'])->name('payroll.store');
 
