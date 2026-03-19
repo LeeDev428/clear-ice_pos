@@ -20,7 +20,7 @@
 
 ## Overview
 
-**Clear Ice POS** is a modern Point-of-Sale system specifically designed for ice manufacturing and retail businesses. Built with **Laravel** (backend) and **React** (frontend), this system provides:
+**Clear Ice POS** is a modern Point-of-Sale system specifically designed for ice manufacturing and retail businesses. Built with a **PHP backend** and **React** frontend, this system provides:
 
 - ✅ Fast and reliable sales processing
 - ✅ Real-time inventory tracking with variance calculation
@@ -44,6 +44,7 @@
 | 📊 **Dashboard** | View sales trends, top products, and key metrics |
 | 🧾 **Z-Read Report** | End-of-day cash reconciliation |
 | 📜 **Transaction History** | View and void past transactions |
+| 👥 **Payroll Portal** | Record time logs, cash advances, and salary payments |
 
 ---
 
@@ -231,6 +232,30 @@ Actual Cash Remitted: [Physical count entered manually]
 Variance = Cash to Remit - Actual Cash Remitted
 - If Positive → Cash SHORT
 - If Negative → Cash OVER
+```
+
+---
+
+### 8. 👥 Payroll Portal
+
+Manage employee logs and payroll-related disbursements.
+
+**Features:**
+- Record daily shift/time logs per employee
+- Record cash advance entries
+- Record salary payment entries
+- Auto-post cash advance and salary payment entries to **Expenses**
+- Filter and review payroll entries by date
+
+**Payroll Flow:**
+```
+Select Date → Select Employee → Select Entry Type
+   → (Time Log OR Cash Advance OR Salary Payment)
+   → SAVE PAYROLL ENTRY
+
+If Entry Type is Cash Advance/Salary:
+   → Auto-record to Expenses
+   → Included in Cash Drawer and Z-Read calculations
 ```
 
 ---
@@ -429,11 +454,11 @@ Who will use the system?
 
 | Component | Technology |
 |-----------|------------|
-| Backend | Laravel 10+ (PHP) |
+| Backend | PHP 8+ |
 | Frontend | React 18+ |
 | Database | MySQL / PostgreSQL |
 | API | RESTful API |
-| Authentication | Laravel Sanctum |
+| Authentication | Session-based auth |
 | UI Framework | Tailwind CSS |
 
 ### Deployment Options
