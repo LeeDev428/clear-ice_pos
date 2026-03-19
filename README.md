@@ -137,6 +137,9 @@ If Variance < 0 → OVERAGE (counting error or recording error)
 
 Record all business expenses.
 
+**Automatic Rule:**
+- Any **cash advance** or **salary payment** must be automatically recorded under **Expenses** in the system.
+
 **Categories:**
 - Auto Repair
 - Fuel/Diesel
@@ -149,6 +152,11 @@ Record all business expenses.
 **Expense Flow:**
 ```
 Select Date → Choose Category → Enter Description → Enter Amount → SAVE
+```
+
+For payroll and cash advance transactions:
+```
+Create Cash Advance/Salary Entry → Auto-post to Expenses → Reflect in Cash Drawer and Z-Read
 ```
 
 All expenses for the selected date are displayed below for easy review.
@@ -243,6 +251,7 @@ Variance = Cash to Remit - Actual Cash Remitted
    - Finalize transaction
 
 2. **Log Expenses** as they occur
+   - Cash advances and salary payouts are auto-logged as expenses
 
 3. **Collect Payments** from customers with balances
 
