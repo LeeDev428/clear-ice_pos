@@ -137,6 +137,9 @@ If Variance < 0 → OVERAGE (counting error or recording error)
 
 Record all business expenses.
 
+**Automatic Expense Rule:**
+- Any **cash advance** or **salary payment** is automatically recorded under the system's **Expenses** with the proper category and amount.
+
 **Categories:**
 - Auto Repair
 - Fuel/Diesel
