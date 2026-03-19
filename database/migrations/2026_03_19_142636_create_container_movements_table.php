@@ -13,7 +13,17 @@ return new class extends Migration
     {
         Schema::create('container_movements', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('customer_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('sale_id')->nullable()->constrained()->nullOnDelete();
+            $table->string('container_type');
+            $table->unsignedInteger('quantity');
+            $table->string('movement_type');
+            $table->date('movement_date');
+            $table->text('notes')->nullable();
             $table->timestamps();
+
+            $table->index(['customer_id', 'container_type', 'movement_type']);
+            $table->index(['movement_date', 'container_type']);
         });
     }
 
