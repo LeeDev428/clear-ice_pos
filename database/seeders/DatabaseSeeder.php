@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Customer;
+use App\Models\Employee;
 use App\Models\Product;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
@@ -48,6 +49,19 @@ class DatabaseSeeder extends Seeder
             Product::query()->updateOrCreate(
                 ['name' => $product['name']],
                 $product + ['is_active' => true]
+            );
+        }
+
+        $employees = [
+            ['name' => 'Juan Dela Cruz', 'role' => 'Delivery Staff'],
+            ['name' => 'Maria Santos', 'role' => 'Cashier'],
+            ['name' => 'Pedro Reyes', 'role' => 'Helper'],
+        ];
+
+        foreach ($employees as $employee) {
+            Employee::query()->updateOrCreate(
+                ['name' => $employee['name']],
+                $employee + ['is_active' => true]
             );
         }
     }
