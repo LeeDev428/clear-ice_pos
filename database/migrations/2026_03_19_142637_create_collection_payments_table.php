@@ -13,7 +13,16 @@ return new class extends Migration
     {
         Schema::create('collection_payments', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('customer_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('sale_id')->nullable()->constrained()->nullOnDelete();
+            $table->date('payment_date');
+            $table->string('payment_method');
+            $table->decimal('amount', 10, 2);
+            $table->text('notes')->nullable();
+            $table->foreignId('recorded_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
+
+            $table->index(['customer_id', 'payment_date']);
         });
     }
 
