@@ -3,6 +3,7 @@
 use App\Http\Controllers\CollectionPaymentController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\InventoryCountController;
+use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\PosController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RecordController;
@@ -29,6 +30,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/expenses', [ExpenseController::class, 'store'])->name('expenses.store');
     Route::post('/inventory-counts', [InventoryCountController::class, 'store'])->name('inventory-counts.store');
     Route::post('/collections', [CollectionPaymentController::class, 'store'])->name('collections.store');
+    Route::post('/payroll-entries', [PayrollController::class, 'store'])->name('payroll.store');
 
     Route::post('/records/container-return', [RecordController::class, 'returnContainer'])->name('records.container-return');
     Route::get('/records/history', [RecordController::class, 'history'])->name('records.history');
