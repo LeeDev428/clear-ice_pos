@@ -22,8 +22,8 @@ return new class extends Migration
             $table->text('notes')->nullable();
             $table->timestamps();
 
-            $table->index(['customer_id', 'container_type', 'movement_type']);
-            $table->index(['movement_date', 'container_type']);
+            $table->index(['customer_id', 'container_type', 'movement_type'], 'cm_customer_type_move_idx');
+            $table->index(['movement_date', 'container_type'], 'cm_date_type_idx');
         });
     }
 
