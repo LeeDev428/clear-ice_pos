@@ -11,6 +11,7 @@ use App\Models\InventoryCount;
 use App\Models\PayrollEntry;
 use App\Models\Product;
 use App\Models\Sale;
+use App\Models\WaterRestock;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -92,6 +93,11 @@ class PosController extends Controller
             ->orderBy('ice_size')
             ->get();
 
+        $waterRestocksToday = WaterRestock::query()
+            ->whereDate('restock_date', $today)
+            ->latest('id')
+            ->get();
+
         $history = Sale::query()
             ->with('customer:id,name')
             ->whereDate('sale_date', $historyDate)
@@ -138,6 +144,7 @@ class PosController extends Controller
             'unpaidBalances' => $unpaidBalances,
             'borrowedContainers' => $borrowedContainers,
             'inventoryToday' => $inventoryToday,
+            'waterRestocksToday' => $waterRestocksToday,
             'history' => $history,
             'historyDate' => $historyDate,
             'payrollToday' => $payrollToday,
