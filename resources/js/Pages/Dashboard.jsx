@@ -176,113 +176,113 @@ export default function Dashboard({
 
     const submitSale = (event) => {
         event.preventDefault();
-        salesForm
-            .transform((data) => ({
-                ...data,
-                customer_id: data.customer_id ? Number(data.customer_id) : null,
-                cash_amount: Number(data.cash_amount || 0),
-                gcash_amount: Number(data.gcash_amount || 0),
-                items: data.items
-                    .filter((item) => item.product_id)
-                    .map((item) => ({
-                        ...item,
-                        product_id: Number(item.product_id),
-                        quantity: Number(item.quantity || 0),
-                        container_borrowed_qty: Number(item.container_borrowed_qty || 0),
-                    })),
-            }))
-            .post(route('sales.store'), {
-                preserveScroll: true,
-                onSuccess: () => {
-                    salesForm.reset('delivered_by', 'cash_amount', 'gcash_amount', 'notes');
-                    salesForm.setData('items', [
-                        { product_id: '', quantity: 1, container_borrowed_qty: 0 },
-                    ]);
-                },
-            });
+        salesForm.transform((data) => ({
+            ...data,
+            customer_id: data.customer_id ? Number(data.customer_id) : null,
+            cash_amount: Number(data.cash_amount || 0),
+            gcash_amount: Number(data.gcash_amount || 0),
+            items: data.items
+                .filter((item) => item.product_id)
+                .map((item) => ({
+                    ...item,
+                    product_id: Number(item.product_id),
+                    quantity: Number(item.quantity || 0),
+                    container_borrowed_qty: Number(item.container_borrowed_qty || 0),
+                })),
+        }));
+
+        salesForm.post(route('sales.store'), {
+            preserveScroll: true,
+            onSuccess: () => {
+                salesForm.reset('delivered_by', 'cash_amount', 'gcash_amount', 'notes');
+                salesForm.setData('items', [
+                    { product_id: '', quantity: 1, container_borrowed_qty: 0 },
+                ]);
+            },
+        });
     };
 
     const submitExpense = (event) => {
         event.preventDefault();
-        expenseForm
-            .transform((data) => ({
-                ...data,
-                amount: Number(data.amount || 0),
-            }))
-            .post(route('expenses.store'), {
-                preserveScroll: true,
-                onSuccess: () => expenseForm.reset('description', 'amount'),
-            });
+        expenseForm.transform((data) => ({
+            ...data,
+            amount: Number(data.amount || 0),
+        }));
+
+        expenseForm.post(route('expenses.store'), {
+            preserveScroll: true,
+            onSuccess: () => expenseForm.reset('description', 'amount'),
+        });
     };
 
     const submitInventory = (event) => {
         event.preventDefault();
-        inventoryForm
-            .transform((data) => ({
-                ...data,
-                beginning_sacks: Number(data.beginning_sacks || 0),
-                harvested_today: Number(data.harvested_today || 0),
-                actual_ending_count: Number(data.actual_ending_count || 0),
-            }))
-            .post(route('inventory-counts.store'), {
-                preserveScroll: true,
-            });
+        inventoryForm.transform((data) => ({
+            ...data,
+            beginning_sacks: Number(data.beginning_sacks || 0),
+            harvested_today: Number(data.harvested_today || 0),
+            actual_ending_count: Number(data.actual_ending_count || 0),
+        }));
+
+        inventoryForm.post(route('inventory-counts.store'), {
+            preserveScroll: true,
+        });
     };
 
     const submitCollection = (event) => {
         event.preventDefault();
-        collectionForm
-            .transform((data) => ({
-                ...data,
-                customer_id: data.customer_id ? Number(data.customer_id) : null,
-                amount: Number(data.amount || 0),
-            }))
-            .post(route('collections.store'), {
-                preserveScroll: true,
-                onSuccess: () => collectionForm.reset('amount', 'notes'),
-            });
+        collectionForm.transform((data) => ({
+            ...data,
+            customer_id: data.customer_id ? Number(data.customer_id) : null,
+            amount: Number(data.amount || 0),
+        }));
+
+        collectionForm.post(route('collections.store'), {
+            preserveScroll: true,
+            onSuccess: () => collectionForm.reset('amount', 'notes'),
+        });
     };
 
     const submitWaterRestock = (event) => {
         event.preventDefault();
-        waterRestockForm
-            .transform((data) => ({
-                ...data,
-                quantity: Number(data.quantity || 0),
-            }))
-            .post(route('water-restocks.store'), {
-                preserveScroll: true,
-                onSuccess: () => waterRestockForm.reset('quantity', 'notes'),
-            });
+        waterRestockForm.transform((data) => ({
+            ...data,
+            quantity: Number(data.quantity || 0),
+        }));
+
+        waterRestockForm.post(route('water-restocks.store'), {
+            preserveScroll: true,
+            onSuccess: () => waterRestockForm.reset('quantity', 'notes'),
+        });
     };
 
     const submitContainerReturn = (event) => {
         event.preventDefault();
-        containerReturnForm
-            .transform((data) => ({
-                ...data,
-                customer_id: data.customer_id ? Number(data.customer_id) : null,
-                quantity: Number(data.quantity || 0),
-            }))
-            .post(route('records.container-return'), {
-                preserveScroll: true,
-                onSuccess: () => containerReturnForm.reset('quantity', 'notes'),
-            });
+        containerReturnForm.transform((data) => ({
+            ...data,
+            customer_id: data.customer_id ? Number(data.customer_id) : null,
+            quantity: Number(data.quantity || 0),
+        }));
+
+        containerReturnForm.post(route('records.container-return'), {
+            preserveScroll: true,
+            onSuccess: () => containerReturnForm.reset('quantity', 'notes'),
+        });
     };
 
     const submitPayroll = (event) => {
         event.preventDefault();
-        payrollForm
-            .transform((data) => ({
-                ...data,
-                employee_id: data.employee_id ? Number(data.employee_id) : null,
-                lunch_break_minutes: Number(data.lunch_break_minutes || 0),
-                amount: Number(data.amount || 0),
-            }))
-            .post(route('payroll.store'), {
-                preserveScroll: true,
-                onSuccess: () => payrollForm.reset('amount', 'notes', 'actual_in', 'actual_out'),
-            });
+        payrollForm.transform((data) => ({
+            ...data,
+            employee_id: data.employee_id ? Number(data.employee_id) : null,
+            lunch_break_minutes: Number(data.lunch_break_minutes || 0),
+            amount: Number(data.amount || 0),
+        }));
+
+        payrollForm.post(route('payroll.store'), {
+            preserveScroll: true,
+            onSuccess: () => payrollForm.reset('amount', 'notes', 'actual_in', 'actual_out'),
+        });
     };
 
     const loadHistory = () => {
