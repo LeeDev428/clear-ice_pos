@@ -1,4 +1,4 @@
-name: Deploy to Hostinger Shared Hosting
+name: Deploying to Production
 
 on:
   push:
