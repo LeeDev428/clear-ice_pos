@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+  workflow_dispatch:
 
 concurrency:
   group: production-deploy
@@ -12,10 +13,60 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: production
+
+    env:
+      HOSTINGER_SSH_HOST: ${{ secrets.HOSTINGER_SSH_HOST }}
+      HOSTINGER_SSH_PORT: ${{ secrets.HOSTINGER_SSH_PORT }}
+      HOSTINGER_SSH_USER: ${{ secrets.HOSTINGER_SSH_USER }}
+      HOSTINGER_SSH_KEY: ${{ secrets.HOSTINGER_SSH_KEY }}
+      HOSTINGER_APP_PATH: ${{ vars.HOSTINGER_APP_PATH }}
+      HOSTINGER_PUBLIC_PATH: ${{ vars.HOSTINGER_PUBLIC_PATH }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Validate deployment secrets and variables
+        run: |
+          set -e
+
+          missing=0
+
+          if [ -z "$HOSTINGER_SSH_HOST" ]; then
+            echo "Missing required secret: HOSTINGER_SSH_HOST"
+            missing=1
+          fi
+
+          if [ -z "$HOSTINGER_SSH_PORT" ]; then
+            echo "Missing required secret: HOSTINGER_SSH_PORT"
+            missing=1
+          fi
+
+          if [ -z "$HOSTINGER_SSH_USER" ]; then
+            echo "Missing required secret: HOSTINGER_SSH_USER"
+            missing=1
+          fi
+
+          if [ -z "$HOSTINGER_SSH_KEY" ]; then
+            echo "Missing required secret: HOSTINGER_SSH_KEY"
+            missing=1
+          fi
+
+          if [ -z "$HOSTINGER_APP_PATH" ]; then
+            echo "Missing required variable: HOSTINGER_APP_PATH"
+            missing=1
+          fi
+
+          if [ -z "$HOSTINGER_PUBLIC_PATH" ]; then
+            echo "Missing required variable: HOSTINGER_PUBLIC_PATH"
+            missing=1
+          fi
+
+          if [ "$missing" -ne 0 ]; then
+            echo "Deployment configuration is incomplete."
+            exit 1
+          fi
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -58,10 +109,10 @@ jobs:
       - name: Upload release package
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ secrets.HOSTINGER_SSH_HOST }}
-          username: ${{ secrets.HOSTINGER_SSH_USER }}
-          key: ${{ secrets.HOSTINGER_SSH_KEY }}
-          port: ${{ secrets.HOSTINGER_SSH_PORT }}
+          host: ${{ env.HOSTINGER_SSH_HOST }}
+          username: ${{ env.HOSTINGER_SSH_USER }}
+          key: ${{ env.HOSTINGER_SSH_KEY }}
+          port: ${{ env.HOSTINGER_SSH_PORT }}
           source: release.tgz
           target: /tmp
           overwrite: true
@@ -69,16 +120,16 @@ jobs:
       - name: Deploy on server
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.HOSTINGER_SSH_HOST }}
-          username: ${{ secrets.HOSTINGER_SSH_USER }}
-          key: ${{ secrets.HOSTINGER_SSH_KEY }}
-          port: ${{ secrets.HOSTINGER_SSH_PORT }}
+          host: ${{ env.HOSTINGER_SSH_HOST }}
+          username: ${{ env.HOSTINGER_SSH_USER }}
+          key: ${{ env.HOSTINGER_SSH_KEY }}
+          port: ${{ env.HOSTINGER_SSH_PORT }}
           script_stop: true
           script: |
             set -e
 
-            APP_PATH="${{ secrets.HOSTINGER_APP_PATH }}"
-            PUBLIC_PATH="${{ secrets.HOSTINGER_PUBLIC_PATH }}"
+            APP_PATH="${{ env.HOSTINGER_APP_PATH }}"
+            PUBLIC_PATH="${{ env.HOSTINGER_PUBLIC_PATH }}"
 
             mkdir -p "$APP_PATH"
             mkdir -p "$PUBLIC_PATH"
@@ -102,6 +153,7 @@ jobs:
             php artisan view:cache
 
             cp -a "$APP_PATH/public/." "$PUBLIC_PATH/"
+            rm -f "$PUBLIC_PATH/default.php"
 
             cat > "$PUBLIC_PATH/index.php" <<PHP
             <?php
