@@ -19,6 +19,8 @@
 /storage/*.key
 /storage/pail
 /vendor
+release.tgz
+_prod.env.tmp
 Homestead.json
 Homestead.yaml
 Thumbs.db
