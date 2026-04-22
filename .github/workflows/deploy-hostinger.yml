@@ -147,6 +147,7 @@ jobs:
             chmod -R ug+rw storage bootstrap/cache
 
             php artisan migrate --force
+            php artisan db:seed --force
             php artisan optimize:clear
             php artisan config:cache
             php artisan route:cache
@@ -155,23 +156,7 @@ jobs:
             cp -a "$APP_PATH/public/." "$PUBLIC_PATH/"
             rm -f "$PUBLIC_PATH/default.php"
 
-            cat > "$PUBLIC_PATH/index.php" <<PHP
-            <?php
-
-            use Illuminate\Http\Request;
-
-            define('LARAVEL_START', microtime(true));
-
-            if (file_exists('$APP_PATH/storage/framework/maintenance.php')) {
-                require '$APP_PATH/storage/framework/maintenance.php';
-            }
-
-            require '$APP_PATH/vendor/autoload.php';
-
-            \$app = require_once '$APP_PATH/bootstrap/app.php';
-
-            \$app->handleRequest(Request::capture());
-            PHP
+            sed "s|__APP_PATH__|${APP_PATH}|g" "$APP_PATH/public/hostinger-index.php" > "$PUBLIC_PATH/index.php"
 
             if [ ! -L "$PUBLIC_PATH/storage" ]; then
               ln -s "$APP_PATH/storage/app/public" "$PUBLIC_PATH/storage" || true
