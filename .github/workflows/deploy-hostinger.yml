@@ -1,0 +1,128 @@
+name: Deploy to Hostinger Shared Hosting
+
+on:
+  push:
+    branches:
+      - master
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer
+          coverage: none
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install PHP dependencies
+        run: composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Build frontend assets
+        run: npm run build
+
+      - name: Prepare release package
+        run: |
+          mkdir -p release
+          rsync -a ./ release/ \
+            --exclude '.git' \
+            --exclude '.github' \
+            --exclude 'node_modules' \
+            --exclude 'tests' \
+            --exclude '.env' \
+            --exclude '.env.*' \
+            --exclude 'storage/logs/*' \
+            --exclude 'storage/framework/cache/*' \
+            --exclude 'storage/framework/sessions/*' \
+            --exclude 'storage/framework/views/*'
+          tar -C release -czf release.tgz .
+
+      - name: Upload release package
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOSTINGER_SSH_HOST }}
+          username: ${{ secrets.HOSTINGER_SSH_USER }}
+          key: ${{ secrets.HOSTINGER_SSH_KEY }}
+          port: ${{ secrets.HOSTINGER_SSH_PORT }}
+          source: release.tgz
+          target: /tmp
+          overwrite: true
+
+      - name: Deploy on server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOSTINGER_SSH_HOST }}
+          username: ${{ secrets.HOSTINGER_SSH_USER }}
+          key: ${{ secrets.HOSTINGER_SSH_KEY }}
+          port: ${{ secrets.HOSTINGER_SSH_PORT }}
+          script_stop: true
+          script: |
+            set -e
+
+            APP_PATH="${{ secrets.HOSTINGER_APP_PATH }}"
+            PUBLIC_PATH="${{ secrets.HOSTINGER_PUBLIC_PATH }}"
+
+            mkdir -p "$APP_PATH"
+            mkdir -p "$PUBLIC_PATH"
+
+            tar -xzf /tmp/release.tgz -C "$APP_PATH"
+
+            cd "$APP_PATH"
+
+            if [ ! -f .env ]; then
+              echo "Deployment stopped: missing $APP_PATH/.env"
+              exit 1
+            fi
+
+            mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache
+            chmod -R ug+rw storage bootstrap/cache
+
+            php artisan migrate --force
+            php artisan optimize:clear
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+
+            cp -a "$APP_PATH/public/." "$PUBLIC_PATH/"
+
+            cat > "$PUBLIC_PATH/index.php" <<PHP
+            <?php
+
+            use Illuminate\Http\Request;
+
+            define('LARAVEL_START', microtime(true));
+
+            if (file_exists('$APP_PATH/storage/framework/maintenance.php')) {
+                require '$APP_PATH/storage/framework/maintenance.php';
+            }
+
+            require '$APP_PATH/vendor/autoload.php';
+
+            \$app = require_once '$APP_PATH/bootstrap/app.php';
+
+            \$app->handleRequest(Request::capture());
+            PHP
+
+            if [ ! -L "$PUBLIC_PATH/storage" ]; then
+              ln -s "$APP_PATH/storage/app/public" "$PUBLIC_PATH/storage" || true
+            fi
+
+            rm -f /tmp/release.tgz
