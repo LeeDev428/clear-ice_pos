@@ -63,6 +63,33 @@ class PosController extends Controller
 
         $totals['cash_to_remit'] = $totals['cash_sales'] + $totals['collections_cash'] - $totals['expenses'];
 
+        // Z-Read totals for selected date
+        $zreadTotals = [
+            'sales' => (float) Sale::query()->whereDate('sale_date', $zreadDate)->where('status', 'completed')->sum('total_amount'),
+            'cash_sales' => (float) Sale::query()->whereDate('sale_date', $zreadDate)->where('status', 'completed')->sum('cash_amount'),
+            'gcash_sales' => (float) Sale::query()->whereDate('sale_date', $zreadDate)->where('status', 'completed')->sum('gcash_amount'),
+            'credit_sales' => (float) Sale::query()->whereDate('sale_date', $zreadDate)->where('status', 'completed')->sum('credit_amount'),
+            'expenses' => (float) Expense::query()->whereDate('expense_date', $zreadDate)->sum('amount'),
+            'collections_cash' => (float) CollectionPayment::query()->whereDate('payment_date', $zreadDate)->where('payment_method', 'cash')->sum('amount'),
+            'collections_gcash' => (float) CollectionPayment::query()->whereDate('payment_date', $zreadDate)->where('payment_method', 'gcash')->sum('amount'),
+            'discount_total' => (float) Sale::query()->whereDate('sale_date', $zreadDate)->where('status', 'completed')->sum('discount_amount'),
+            'void_count' => (int) Sale::query()->whereDate('sale_date', $zreadDate)->where('status', 'void')->count(),
+            'sale_count' => (int) Sale::query()->whereDate('sale_date', $zreadDate)->where('status', 'completed')->count(),
+        ];
+        $zreadTotals['cash_to_remit'] = $zreadTotals['cash_sales'] + $zreadTotals['collections_cash'] - $zreadTotals['expenses'];
+
+        // Dashboard per-day report
+        $dashboardTotals = [
+            'sales' => (float) Sale::query()->whereDate('sale_date', $dashboardDate)->where('status', 'completed')->sum('total_amount'),
+            'cash_sales' => (float) Sale::query()->whereDate('sale_date', $dashboardDate)->where('status', 'completed')->sum('cash_amount'),
+            'gcash_sales' => (float) Sale::query()->whereDate('sale_date', $dashboardDate)->where('status', 'completed')->sum('gcash_amount'),
+            'credit_sales' => (float) Sale::query()->whereDate('sale_date', $dashboardDate)->where('status', 'completed')->sum('credit_amount'),
+            'expenses' => (float) Expense::query()->whereDate('expense_date', $dashboardDate)->sum('amount'),
+            'collections_cash' => (float) CollectionPayment::query()->whereDate('payment_date', $dashboardDate)->where('payment_method', 'cash')->sum('amount'),
+            'collections_gcash' => (float) CollectionPayment::query()->whereDate('payment_date', $dashboardDate)->where('payment_method', 'gcash')->sum('amount'),
+        ];
+        $dashboardTotals['cash_to_remit'] = $dashboardTotals['cash_sales'] + $dashboardTotals['collections_cash'] - $dashboardTotals['expenses'];
+
         $unpaidBalances = Sale::query()
             ->select('customer_id')
             ->selectRaw('SUM(credit_amount - paid_credit_amount) AS outstanding')
@@ -114,6 +141,11 @@ class PosController extends Controller
             ->limit(30)
             ->get();
 
+        $expensesToday = Expense::query()
+            ->whereDate('expense_date', $today)
+            ->latest('id')
+            ->get();
+
         $startDate = now()->subDays(6)->toDateString();
 
         $salesTrend = Sale::query()
@@ -151,9 +183,14 @@ class PosController extends Controller
             'historyDate' => $historyDate,
             'payrollToday' => $payrollToday,
             'payrollDate' => $payrollDate,
+            'expensesToday' => $expensesToday,
             'salesTrend' => $salesTrend,
             'topProducts' => $topProducts,
             'totals' => $totals,
+            'zreadDate' => $zreadDate,
+            'zreadTotals' => $zreadTotals,
+            'dashboardDate' => $dashboardDate,
+            'dashboardTotals' => $dashboardTotals,
         ]);
     }
 }
