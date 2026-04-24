@@ -24,8 +24,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('/sales', [SaleController::class, 'store'])->name('sales.store');
     Route::patch('/sales/{sale}/void', [SaleController::class, 'void'])->name('sales.void');
+    Route::patch('/sales/{sale}', [SaleController::class, 'update'])->name('sales.update');
 
     Route::post('/expenses', [ExpenseController::class, 'store'])->name('expenses.store');
+    Route::patch('/expenses/{expense}', [ExpenseController::class, 'update'])->name('expenses.update');
+    Route::delete('/expenses/{expense}', [ExpenseController::class, 'destroy'])->name('expenses.destroy');
     Route::post('/inventory-counts', [InventoryCountController::class, 'store'])->name('inventory-counts.store');
     Route::post('/water-restocks', [WaterRestockController::class, 'store'])->name('water-restocks.store');
     Route::post('/collections', [CollectionPaymentController::class, 'store'])->name('collections.store');
