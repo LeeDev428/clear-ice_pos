@@ -26,6 +26,8 @@ class SaleController extends Controller
             'items.*.product_id' => ['required', 'exists:products,id'],
             'items.*.quantity' => ['required', 'numeric', 'gt:0'],
             'items.*.container_borrowed_qty' => ['nullable', 'integer', 'min:0'],
+            'items.*.discount' => ['nullable', 'numeric', 'min:0'],
+            'items.*.container_type' => ['nullable', 'string', 'max:50'],
         ]);
 
         $productIds = collect($validated['items'])->pluck('product_id')->unique()->values();
@@ -48,15 +50,20 @@ class SaleController extends Controller
             $unitPrice = (float) $product->price;
             $subtotal = $quantity * $unitPrice;
 
+            $discount = (float) ($item['discount'] ?? 0);
+            $discountedSubtotal = max(0, $subtotal - $discount);
+
             $lineItems[] = [
                 'product' => $product,
                 'quantity' => $quantity,
                 'unit_price' => $unitPrice,
-                'subtotal' => $subtotal,
+                'subtotal' => $discountedSubtotal,
+                'discount' => $discount,
+                'container_type' => $item['container_type'] ?? null,
                 'container_borrowed_qty' => (int) ($item['container_borrowed_qty'] ?? 0),
             ];
 
-            $total += $subtotal;
+            $total += $discountedSubtotal;
         }
 
         $cash = 0.0;
@@ -98,6 +105,7 @@ class SaleController extends Controller
                 'credit_amount' => $credit,
                 'paid_credit_amount' => 0,
                 'total_amount' => $total,
+                'discount_amount' => collect($lineItems)->sum('discount'),
                 'status' => 'completed',
                 'notes' => $validated['notes'] ?? null,
             ]);
@@ -108,19 +116,23 @@ class SaleController extends Controller
                     'quantity' => $item['quantity'],
                     'unit_price' => $item['unit_price'],
                     'subtotal' => $item['subtotal'],
+                    'discount' => $item['discount'],
+                    'container_type' => $item['container_type'],
                     'container_borrowed_qty' => $item['container_borrowed_qty'],
                 ]);
+
+                $containerType = $item['container_type'] ?? $item['product']->container_type ?? null;
 
                 if (
                     $sale->customer_id
                     && $item['product']->is_returnable
-                    && ! empty($item['product']->container_type)
+                    && ! empty($containerType)
                     && $item['container_borrowed_qty'] > 0
                 ) {
                     ContainerMovement::query()->create([
                         'customer_id' => $sale->customer_id,
                         'sale_id' => $sale->id,
-                        'container_type' => $item['product']->container_type,
+                        'container_type' => $containerType,
                         'quantity' => $item['container_borrowed_qty'],
                         'movement_type' => 'borrow',
                         'movement_date' => $sale->sale_date,
@@ -133,17 +145,70 @@ class SaleController extends Controller
         return redirect()->route('dashboard')->with('success', 'Sale recorded successfully.');
     }
 
-    public function void(Sale $sale): RedirectResponse
+    public function void(Request $request, Sale $sale): RedirectResponse
     {
         if ($sale->status === 'void') {
             return back()->with('success', 'Sale is already voided.');
         }
 
+        $validated = $request->validate([
+            'void_reason' => ['required', 'string', 'max:500'],
+            'voided_by' => ['nullable', 'string', 'max:255'],
+        ]);
+
         $sale->update([
             'status' => 'void',
             'voided_at' => now(),
+            'void_reason' => $validated['void_reason'],
+            'voided_by' => $request->user()?->id,
         ]);
 
         return redirect()->route('dashboard')->with('success', 'Sale voided successfully.');
+    }
+
+    public function update(Request $request, Sale $sale): RedirectResponse
+    {
+        if ($sale->status === 'void') {
+            return back()->withErrors(['sale' => 'Cannot edit a voided sale.']);
+        }
+
+        $validated = $request->validate([
+            'delivered_by' => ['nullable', 'string', 'max:255'],
+            'payment_method' => ['required', Rule::in(['cash', 'gcash', 'credit', 'partial'])],
+            'cash_amount' => ['nullable', 'numeric', 'min:0'],
+            'gcash_amount' => ['nullable', 'numeric', 'min:0'],
+            'notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $total = (float) $sale->total_amount;
+        $cash = 0.0;
+        $gcash = 0.0;
+        $credit = 0.0;
+
+        if ($validated['payment_method'] === 'cash') {
+            $cash = $total;
+        } elseif ($validated['payment_method'] === 'gcash') {
+            $gcash = $total;
+        } elseif ($validated['payment_method'] === 'credit') {
+            $credit = $total;
+        } elseif ($validated['payment_method'] === 'partial') {
+            $cash = (float) ($validated['cash_amount'] ?? 0);
+            $gcash = (float) ($validated['gcash_amount'] ?? 0);
+            if (($cash + $gcash) > $total) {
+                return back()->withErrors(['payment_method' => 'Partial cash and GCash cannot exceed total amount.'])->withInput();
+            }
+            $credit = $total - ($cash + $gcash);
+        }
+
+        $sale->update([
+            'delivered_by' => $validated['delivered_by'] ?? null,
+            'payment_method' => $validated['payment_method'],
+            'cash_amount' => $cash,
+            'gcash_amount' => $gcash,
+            'credit_amount' => $credit,
+            'notes' => $validated['notes'] ?? null,
+        ]);
+
+        return redirect()->route('dashboard')->with('success', 'Sale updated successfully.');
     }
 }
