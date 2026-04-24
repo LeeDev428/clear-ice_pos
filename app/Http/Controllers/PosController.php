@@ -23,6 +23,8 @@ class PosController extends Controller
         $today = now()->toDateString();
         $historyDate = $request->query('date', $today);
         $payrollDate = $request->query('payroll_date', $today);
+        $zreadDate = $request->query('zread_date', $today);
+        $dashboardDate = $request->query('dashboard_date', $today);
 
         $products = Product::query()
             ->where('is_active', true)
