@@ -36,4 +36,25 @@ class ExpenseController extends Controller
 
         return redirect()->route('dashboard')->with('success', 'Expense recorded successfully.');
     }
+
+    public function update(Request $request, Expense $expense): RedirectResponse
+    {
+        $validated = $request->validate([
+            'category' => ['required', 'string', 'max:100'],
+            'description' => ['required', 'string', 'max:255'],
+            'amount' => ['required', 'numeric', 'gt:0'],
+            'payment_source' => ['required', Rule::in(['cash', 'gcash'])],
+        ]);
+
+        $expense->update($validated);
+
+        return redirect()->route('dashboard')->with('success', 'Expense updated successfully.');
+    }
+
+    public function destroy(Expense $expense): RedirectResponse
+    {
+        $expense->delete();
+
+        return redirect()->route('dashboard')->with('success', 'Expense deleted successfully.');
+    }
 }
