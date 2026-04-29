@@ -16,6 +16,7 @@ import {
     FiPrinter,
     FiRefreshCw,
     FiSearch,
+    FiSettings,
     FiTruck,
     FiTrendingUp,
     FiUsers,
@@ -57,6 +58,11 @@ export default function Dashboard({
     totals,
     zreadTotals,
     dashboardTotals,
+    cashAdvances,
+    periodTimeLogs,
+    periodEmployee: periodEmployeeProp,
+    periodStart: periodStartProp,
+    periodEnd: periodEndProp,
 }) {
     const { flash } = usePage().props;
     const [activeTab, setActiveTab] = useState('Sales');
@@ -77,6 +83,26 @@ export default function Dashboard({
     const [containerSearch, setContainerSearch] = useState('');
     const [showPrintReceipt, setShowPrintReceipt] = useState(false);
     const [lastSaleData, setLastSaleData] = useState(null);
+    // NEW state
+    const [payrollSubTab, setPayrollSubTab] = useState('time_logs');
+    const [showProductModal, setShowProductModal] = useState(false);
+    const [editProductTarget, setEditProductTarget] = useState(null);
+    const [selectedProduct, setSelectedProduct] = useState(null);
+    const [posQty, setPosQty] = useState(1);
+    const [posDiscount, setPosDiscount] = useState(0);
+    const [posBorrowedQty, setPosBorrowedQty] = useState(0);
+    const [showEmployeeModal, setShowEmployeeModal] = useState(false);
+    const [editEmployeeTarget, setEditEmployeeTarget] = useState(null);
+    const [showViewReceiptModal, setShowViewReceiptModal] = useState(false);
+    const [viewReceiptSale, setViewReceiptSale] = useState(null);
+    const [periodEmployee, setPeriodEmployee] = useState(periodEmployeeProp || '');
+    const [periodStart, setPeriodStart] = useState(periodStartProp || '');
+    const [periodEnd, setPeriodEnd] = useState(periodEndProp || '');
+    const [periodPaymentDate, setPeriodPaymentDate] = useState(today);
+    const [deductSSS, setDeductSSS] = useState(true);
+    const [deductPH, setDeductPH] = useState(true);
+    const [deductHDMF, setDeductHDMF] = useState(true);
+    const [caDeducted, setCaDeducted] = useState(0);
 
     const salesForm = useForm({
         sale_date: today,
