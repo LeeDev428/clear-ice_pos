@@ -19,8 +19,13 @@ class Sale extends Model
         'credit_amount',
         'paid_credit_amount',
         'total_amount',
+        'discount_amount',
         'status',
         'voided_at',
+        'void_reason',
+        'voided_by',
+        'last_edited_by',
+        'last_edited_at',
         'notes',
     ];
 
@@ -42,6 +47,11 @@ class Sale extends Model
     public function recorder(): BelongsTo
     {
         return $this->belongsTo(User::class, 'recorded_by');
+    }
+
+    public function editor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'last_edited_by');
     }
 
     public function items(): HasMany
