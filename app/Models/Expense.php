@@ -15,6 +15,7 @@ class Expense extends Model
         'payment_source',
         'is_cash_advance',
         'is_salary_payment',
+        'employee_id',
         'recorded_by',
     ];
 
