@@ -163,6 +163,7 @@ export default function Dashboard({
         entry_type: 'time_log',
         deduction_type: '',
         shift_length: 'Full Day (100% Rate)',
+        shift_type: 'full_day',
         expected_in: '',
         actual_in: '',
         actual_out: '',
@@ -171,6 +172,46 @@ export default function Dashboard({
         ot_rate: 0,
         ot_approved: false,
         amount: '',
+        bonus: 0,
+        notes: '',
+    });
+
+    const productForm = useForm({
+        name: '',
+        category: 'ice',
+        price: '',
+        ice_size: '',
+        container_type: '',
+        is_returnable: false,
+        track_inventory: true,
+    });
+
+    const employeeForm = useForm({
+        name: '',
+        role: '',
+        employee_type: 'regular',
+        daily_rate: '',
+        ot_rate: '',
+        late_rate: '',
+        sss_contribution: 0,
+        philhealth_contribution: 0,
+        pagibig_contribution: 0,
+    });
+
+    const cashAdvanceForm = useForm({
+        employee_id: '',
+        advance_date: today,
+        amount: '',
+        notes: '',
+    });
+
+    const payrollFinalizeForm = useForm({
+        employee_id: '',
+        payment_date: today,
+        start_date: '',
+        end_date: '',
+        net_pay: '',
+        ca_deducted: 0,
         notes: '',
     });
 
