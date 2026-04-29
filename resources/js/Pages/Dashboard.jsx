@@ -546,6 +546,141 @@ export default function Dashboard({
         router.delete(route('expenses.destroy', expense.id), { preserveScroll: true });
     };
 
+    // POS helpers
+    const addToCart = () => {
+        if (!selectedProduct) return;
+        const existing = salesForm.data.items.find((i) => i.product_id === selectedProduct.id);
+        if (existing) {
+            salesForm.setData('items', salesForm.data.items.map((i) =>
+                i.product_id === selectedProduct.id
+                    ? { ...i, quantity: Number(i.quantity) + Number(posQty) }
+                    : i
+            ));
+        } else {
+            const newItems = salesForm.data.items.filter((i) => i.product_id !== '');
+            salesForm.setData('items', [
+                ...newItems,
+                {
+                    product_id: selectedProduct.id,
+                    quantity: Number(posQty),
+                    discount: Number(posDiscount),
+                    container_borrowed_qty: Number(posBorrowedQty),
+                    container_type: '',
+                },
+            ]);
+        }
+        setSelectedProduct(null);
+        setPosQty(1);
+        setPosDiscount(0);
+        setPosBorrowedQty(0);
+    };
+
+    // Product CRUD
+    const openAddProduct = () => {
+        setEditProductTarget(null);
+        productForm.reset();
+        setShowProductModal(true);
+    };
+    const openEditProduct = (product) => {
+        setEditProductTarget(product);
+        productForm.setData({
+            name: product.name || '',
+            category: product.category || 'ice',
+            price: product.price || '',
+            ice_size: product.ice_size || '',
+            container_type: product.container_type || '',
+            is_returnable: !!product.is_returnable,
+            track_inventory: product.track_inventory !== false,
+        });
+        setShowProductModal(true);
+    };
+    const submitProduct = (event) => {
+        event.preventDefault();
+        if (editProductTarget) {
+            productForm.patch(route('products.update', editProductTarget.id), {
+                preserveScroll: true,
+                onSuccess: () => setShowProductModal(false),
+            });
+        } else {
+            productForm.post(route('products.store'), {
+                preserveScroll: true,
+                onSuccess: () => setShowProductModal(false),
+            });
+        }
+    };
+
+    // Employee CRUD
+    const openAddEmployee = () => {
+        setEditEmployeeTarget(null);
+        employeeForm.reset();
+        setShowEmployeeModal(true);
+    };
+    const openEditEmployee = (emp) => {
+        setEditEmployeeTarget(emp);
+        employeeForm.setData({
+            name: emp.name || '',
+            role: emp.role || '',
+            employee_type: emp.employee_type || 'regular',
+            daily_rate: emp.daily_rate || '',
+            ot_rate: emp.ot_rate || '',
+            late_rate: emp.late_rate || '',
+            sss_contribution: emp.sss_contribution || 0,
+            philhealth_contribution: emp.philhealth_contribution || 0,
+            pagibig_contribution: emp.pagibig_contribution || 0,
+        });
+        setShowEmployeeModal(true);
+    };
+    const submitEmployee = (event) => {
+        event.preventDefault();
+        if (editEmployeeTarget) {
+            employeeForm.patch(route('employees.update', editEmployeeTarget.id), {
+                preserveScroll: true,
+                onSuccess: () => setShowEmployeeModal(false),
+            });
+        } else {
+            employeeForm.post(route('employees.store'), {
+                preserveScroll: true,
+                onSuccess: () => setShowEmployeeModal(false),
+            });
+        }
+    };
+    const deactivateEmployee = (emp) => {
+        if (!confirm(`Deactivate ${emp.name}?`)) return;
+        router.delete(route('employees.destroy', emp.id), { preserveScroll: true });
+    };
+
+    // Cash advance
+    const submitCashAdvance = (event) => {
+        event.preventDefault();
+        cashAdvanceForm.post(route('cash-advances.store'), {
+            preserveScroll: true,
+            onSuccess: () => cashAdvanceForm.reset('amount', 'notes'),
+        });
+    };
+
+    // Payroll finalize
+    const submitFinalizePayroll = (event) => {
+        event.preventDefault();
+        payrollFinalizeForm.patch
+            ? payrollFinalizeForm.patch(route('payroll.finalize'))
+            : router.post(route('payroll.finalize'), payrollFinalizeForm.data, { preserveScroll: true });
+        payrollFinalizeForm.post(route('payroll.finalize'), {
+            preserveScroll: true,
+        });
+    };
+
+    const loadPeriodLogs = () => {
+        if (!periodEmployee || !periodStart || !periodEnd) return;
+        router.reload({
+            only: ['periodTimeLogs', 'periodEmployee', 'periodStart', 'periodEnd'],
+            data: {
+                period_employee: periodEmployee,
+                period_start: periodStart,
+                period_end: periodEnd,
+            },
+        });
+    };
+
     return (
         <AuthenticatedLayout
             header={<h2 className="text-xl font-semibold text-gray-900">Clear Ice POS</h2>}
