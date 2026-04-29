@@ -173,6 +173,8 @@ class SaleController extends Controller
         }
 
         $validated = $request->validate([
+            'sale_date' => ['required', 'date'],
+            'customer_id' => ['nullable', 'exists:customers,id'],
             'delivered_by' => ['nullable', 'string', 'max:255'],
             'payment_method' => ['required', Rule::in(['cash', 'gcash', 'credit', 'partial'])],
             'cash_amount' => ['nullable', 'numeric', 'min:0'],
@@ -201,12 +203,16 @@ class SaleController extends Controller
         }
 
         $sale->update([
+            'sale_date' => $validated['sale_date'],
+            'customer_id' => $validated['customer_id'] ?? null,
             'delivered_by' => $validated['delivered_by'] ?? null,
             'payment_method' => $validated['payment_method'],
             'cash_amount' => $cash,
             'gcash_amount' => $gcash,
             'credit_amount' => $credit,
             'notes' => $validated['notes'] ?? null,
+            'last_edited_by' => $request->user()?->id,
+            'last_edited_at' => now(),
         ]);
 
         return redirect()->route('dashboard')->with('success', 'Sale updated successfully.');
