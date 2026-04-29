@@ -1107,16 +1107,6 @@ export default function Dashboard({
                                 onChange={(value) => expenseForm.setData('expense_date', value)}
                             />
                             <Select
-                                label="Type"
-                                value={expenseForm.data.transaction_type}
-                                onChange={(value) => expenseForm.setData('transaction_type', value)}
-                                options={[
-                                    { value: 'regular', label: 'Regular Expense' },
-                                    { value: 'cash_advance', label: 'Cash Advance' },
-                                    { value: 'salary', label: 'Salary Payment' },
-                                ]}
-                            />
-                            <Select
                                 label="Payment Source"
                                 value={expenseForm.data.payment_source}
                                 onChange={(value) => expenseForm.setData('payment_source', value)}
@@ -1135,9 +1125,6 @@ export default function Dashboard({
                                     { value: 'Utilities', label: 'Utilities' },
                                     { value: 'Maintenance', label: 'Maintenance' },
                                     { value: 'Supplies', label: 'Supplies' },
-                                    { value: 'Salaries', label: 'Salaries' },
-                                    { value: 'Cash Advance', label: 'Cash Advance' },
-                                    { value: 'Salary', label: 'Salary' },
                                     { value: 'Others', label: 'Others' },
                                 ]}
                             />
