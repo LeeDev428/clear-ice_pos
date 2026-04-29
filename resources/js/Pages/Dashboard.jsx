@@ -216,6 +216,8 @@ export default function Dashboard({
     });
 
     const editSaleForm = useForm({
+        sale_date: '',
+        customer_id: '',
         delivered_by: '',
         payment_method: 'cash',
         cash_amount: 0,
@@ -260,6 +262,43 @@ export default function Dashboard({
 
         return Number(zreadTotals?.cash_to_remit || 0) - actual;
     }, [actualCashRemitted, zreadTotals]);
+
+    const selectedPeriodEmployee = useMemo(() => {
+        if (!periodEmployee) return null;
+        return employees.find((e) => String(e.id) === String(periodEmployee)) || null;
+    }, [employees, periodEmployee]);
+
+    const payrollPreview = useMemo(() => {
+        if (!periodTimeLogs || periodTimeLogs.length === 0 || !selectedPeriodEmployee) return null;
+        const emp = selectedPeriodEmployee;
+        let grossPay = 0;
+        let totalLateDeduction = 0;
+        let totalOtEarned = 0;
+        let totalBonus = 0;
+        let fullDays = 0;
+        let halfDays = 0;
+        const rows = periodTimeLogs.map((log) => {
+            const isHalf = log.shift_type === 'half_day';
+            const dayEarned = isHalf ? (Number(emp.daily_rate) / 2) : Number(emp.daily_rate);
+            const otEarned = Number(log.ot_hours || 0) * Number(emp.ot_rate || 0);
+            const bonus = Number(log.bonus || 0);
+            const late = Number(log.late_deduction || 0);
+            const earned = dayEarned + otEarned + bonus - late;
+            grossPay += earned;
+            totalLateDeduction += late;
+            totalOtEarned += otEarned;
+            totalBonus += bonus;
+            if (isHalf) halfDays++; else fullDays++;
+            return { log, dayEarned, otEarned, bonus, late, earned, isHalf };
+        });
+        const sss = deductSSS ? Number(emp.sss_contribution || 0) : 0;
+        const ph = deductPH ? Number(emp.philhealth_contribution || 0) : 0;
+        const hdmf = deductHDMF ? Number(emp.pagibig_contribution || 0) : 0;
+        const ca = Number(caDeducted || 0);
+        const totalDeductions = sss + ph + hdmf + ca + totalLateDeduction;
+        const netPay = Math.max(0, grossPay - totalDeductions);
+        return { rows, grossPay, totalLateDeduction, totalOtEarned, totalBonus, fullDays, halfDays, sss, ph, hdmf, ca, totalDeductions, netPay };
+    }, [periodTimeLogs, selectedPeriodEmployee, deductSSS, deductPH, deductHDMF, caDeducted]);
 
     const addSaleItem = () => {
         salesForm.setData('items', [
