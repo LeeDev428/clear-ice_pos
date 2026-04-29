@@ -117,7 +117,6 @@ export default function Dashboard({
 
     const expenseForm = useForm({
         expense_date: today,
-        transaction_type: 'regular',
         category: 'Auto Repair',
         description: '',
         amount: '',
@@ -661,14 +660,16 @@ export default function Dashboard({
     };
 
     // Payroll finalize
-    const submitFinalizePayroll = (event) => {
-        event.preventDefault();
-        payrollFinalizeForm.patch
-            ? payrollFinalizeForm.patch(route('payroll.finalize'))
-            : router.post(route('payroll.finalize'), payrollFinalizeForm.data, { preserveScroll: true });
-        payrollFinalizeForm.post(route('payroll.finalize'), {
-            preserveScroll: true,
-        });
+    const submitFinalizePayroll = () => {
+        if (!payrollPreview || !periodEmployee || !periodStart || !periodEnd) return;
+        router.post(route('payroll.finalize'), {
+            employee_id: periodEmployee,
+            payment_date: periodPaymentDate,
+            start_date: periodStart,
+            end_date: periodEnd,
+            net_pay: payrollPreview.netPay,
+            ca_deducted: caDeducted,
+        }, { preserveScroll: true });
     };
 
     const loadPeriodLogs = () => {
@@ -2112,6 +2113,156 @@ export default function Dashboard({
                                 onClick={() => window.print()}
                                 className="inline-flex items-center gap-2 rounded-md bg-gray-800 px-3 py-2 text-sm text-white hover:bg-gray-900"
                             >
+                                <FiPrinter /> Print
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Product CRUD Modal */}
+            {showProductModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+                    <div className="w-full max-w-lg rounded-md border border-gray-200 bg-white p-6 shadow-lg">
+                        <h3 className="mb-3 text-base font-semibold text-gray-900">{editProductTarget ? 'Edit Product' : 'Add Product'}</h3>
+                        <form onSubmit={submitProduct} className="space-y-3">
+                            <div className="grid grid-cols-2 gap-3">
+                                <Input label="Name" value={productForm.data.name} onChange={(v) => productForm.setData('name', v)} />
+                                <Select
+                                    label="Category"
+                                    value={productForm.data.category}
+                                    onChange={(v) => productForm.setData('category', v)}
+                                    options={[
+                                        { value: 'ice', label: 'Ice' },
+                                        { value: 'water', label: 'Water' },
+                                        { value: 'other', label: 'Other' },
+                                    ]}
+                                />
+                                <Input label="Price" type="number" step="0.01" value={productForm.data.price} onChange={(v) => productForm.setData('price', v)} />
+                                <Input label="Ice Size" value={productForm.data.ice_size} onChange={(v) => productForm.setData('ice_size', v)} />
+                                <Select
+                                    label="Container Type"
+                                    value={productForm.data.container_type}
+                                    onChange={(v) => productForm.setData('container_type', v)}
+                                    options={[
+                                        { value: '', label: '— None —' },
+                                        { value: 'big_styro', label: 'Big Styro' },
+                                        { value: 'small_styro', label: 'Small Styro' },
+                                        { value: 'gallon', label: 'Slim Gallon' },
+                                        { value: 'round_container', label: 'Round Container' },
+                                        { value: 'sack', label: 'Sack' },
+                                    ]}
+                                    placeholder="None"
+                                />
+                            </div>
+                            <div className="flex gap-4">
+                                <label className="flex items-center gap-2 text-sm">
+                                    <input type="checkbox" checked={!!productForm.data.is_returnable} onChange={(e) => productForm.setData('is_returnable', e.target.checked)} /> Returnable Container
+                                </label>
+                                <label className="flex items-center gap-2 text-sm">
+                                    <input type="checkbox" checked={!!productForm.data.track_inventory} onChange={(e) => productForm.setData('track_inventory', e.target.checked)} /> Track Inventory
+                                </label>
+                            </div>
+                            <div className="flex justify-end gap-3 pt-2">
+                                <button type="button" onClick={() => setShowProductModal(false)} className="rounded-md border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
+                                <button type="submit" disabled={productForm.processing} className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
+                                    {editProductTarget ? 'Save Changes' : 'Add Product'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Employee CRUD Modal */}
+            {showEmployeeModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+                    <div className="w-full max-w-lg rounded-md border border-gray-200 bg-white p-6 shadow-lg">
+                        <h3 className="mb-3 text-base font-semibold text-gray-900">{editEmployeeTarget ? 'Edit Employee' : 'Add Employee'}</h3>
+                        <form onSubmit={submitEmployee} className="space-y-3">
+                            <div className="grid grid-cols-2 gap-3">
+                                <Input label="Name" value={employeeForm.data.name} onChange={(v) => employeeForm.setData('name', v)} />
+                                <Input label="Role / Position" value={employeeForm.data.role} onChange={(v) => employeeForm.setData('role', v)} />
+                                <Select
+                                    label="Employee Type"
+                                    value={employeeForm.data.employee_type}
+                                    onChange={(v) => employeeForm.setData('employee_type', v)}
+                                    options={[
+                                        { value: 'regular', label: 'Regular' },
+                                        { value: 'probationary', label: 'Probationary' },
+                                    ]}
+                                />
+                                <Input label="Daily Rate" type="number" step="0.01" value={employeeForm.data.daily_rate} onChange={(v) => employeeForm.setData('daily_rate', v)} />
+                                <Input label="OT Rate (per hr)" type="number" step="0.01" value={employeeForm.data.ot_rate} onChange={(v) => employeeForm.setData('ot_rate', v)} />
+                                <Input label="Late Rate (per 30-min block)" type="number" step="0.01" value={employeeForm.data.late_rate} onChange={(v) => employeeForm.setData('late_rate', v)} />
+                                <Input label="SSS Contribution" type="number" step="0.01" value={employeeForm.data.sss_contribution} onChange={(v) => employeeForm.setData('sss_contribution', v)} />
+                                <Input label="PhilHealth Contribution" type="number" step="0.01" value={employeeForm.data.philhealth_contribution} onChange={(v) => employeeForm.setData('philhealth_contribution', v)} />
+                                <Input label="Pag-IBIG Contribution" type="number" step="0.01" value={employeeForm.data.pagibig_contribution} onChange={(v) => employeeForm.setData('pagibig_contribution', v)} />
+                            </div>
+                            <div className="flex justify-end gap-3 pt-2">
+                                <button type="button" onClick={() => setShowEmployeeModal(false)} className="rounded-md border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
+                                <button type="submit" disabled={employeeForm.processing} className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
+                                    {editEmployeeTarget ? 'Save Changes' : 'Add Employee'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* View Receipt Modal (from History) */}
+            {showViewReceiptModal && viewReceiptSale && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+                    <div className="w-full max-w-sm rounded-md border border-gray-200 bg-white p-6 shadow-lg print:shadow-none" id="view-receipt">
+                        <div className="mb-3 text-center">
+                            <div className="text-lg font-bold tracking-wide">CLEAR ICE INC.</div>
+                            <div className="text-xs text-gray-500">Underground Technologies Inc.</div>
+                            <div className="text-xs text-gray-500">Tiaong, Quezon</div>
+                            <div className="mt-1 border-t border-dashed border-gray-300 pt-1 text-xs text-gray-500">
+                                Date: {viewReceiptSale.sale_date} &nbsp;&nbsp; TRX ID: TRX-{String(viewReceiptSale.id).padStart(6, '0')}
+                            </div>
+                        </div>
+                        <div className="mb-1 text-sm">
+                            <span className="text-gray-500">Customer: </span>
+                            <span className="font-medium">{viewReceiptSale.customer?.name ?? 'Walk-in'}</span>
+                        </div>
+                        <div className="mb-3 text-sm">
+                            <span className="text-gray-500">Staff: </span>
+                            <span>{viewReceiptSale.recorder?.name ?? '-'}</span>
+                        </div>
+                        <table className="w-full border-t border-dashed border-gray-300 text-xs">
+                            <thead>
+                                <tr>
+                                    <th className="py-1 text-left">Item</th>
+                                    <th className="py-1 text-right">Price</th>
+                                    <th className="py-1 text-right">Qty</th>
+                                    <th className="py-1 text-right">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {(viewReceiptSale.items || []).map((item, i) => {
+                                    const lineTotal = Math.max(0, Number(item.quantity || 0) * Number(item.product?.price || 0) - Number(item.discount || 0));
+                                    return (
+                                        <tr key={i} className="border-t border-gray-100">
+                                            <td className="py-1">{item.product?.name ?? '-'}</td>
+                                            <td className="py-1 text-right">{money(item.product?.price)}</td>
+                                            <td className="py-1 text-right">x{item.quantity}</td>
+                                            <td className="py-1 text-right">{money(lineTotal)}</td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                        <div className="mt-2 border-t border-dashed border-gray-300 pt-2 flex justify-between text-sm font-bold">
+                            <span>TOTAL</span>
+                            <span>{money(viewReceiptSale.total_amount)}</span>
+                        </div>
+                        <div className="mt-1 text-center text-xs text-gray-500 uppercase">
+                            Payment: {viewReceiptSale.payment_method}
+                        </div>
+                        <div className="mt-4 flex justify-end gap-3 print:hidden">
+                            <button type="button" onClick={() => setShowViewReceiptModal(false)} className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">Close</button>
+                            <button type="button" onClick={() => window.print()} className="inline-flex items-center gap-2 rounded-md bg-gray-800 px-3 py-2 text-sm text-white hover:bg-gray-900">
                                 <FiPrinter /> Print
                             </button>
                         </div>
