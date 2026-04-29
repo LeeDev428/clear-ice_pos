@@ -13,15 +13,11 @@ class ExpenseController extends Controller
     {
         $validated = $request->validate([
             'expense_date' => ['required', 'date'],
-            'transaction_type' => ['required', Rule::in(['regular', 'cash_advance', 'salary'])],
-            'category' => ['required', 'string', 'max:100'],
+            'category' => ['required', Rule::in(['Auto Repair', 'Fuel', 'Utilities', 'Maintenance', 'Supplies', 'Others'])],
             'description' => ['required', 'string', 'max:255'],
             'amount' => ['required', 'numeric', 'gt:0'],
             'payment_source' => ['required', Rule::in(['cash', 'gcash'])],
         ]);
-
-        $isCashAdvance = $validated['transaction_type'] === 'cash_advance';
-        $isSalary = $validated['transaction_type'] === 'salary';
 
         Expense::query()->create([
             'expense_date' => $validated['expense_date'],
@@ -29,8 +25,8 @@ class ExpenseController extends Controller
             'description' => $validated['description'],
             'amount' => $validated['amount'],
             'payment_source' => $validated['payment_source'],
-            'is_cash_advance' => $isCashAdvance,
-            'is_salary_payment' => $isSalary,
+            'is_cash_advance' => false,
+            'is_salary_payment' => false,
             'recorded_by' => $request->user()?->id,
         ]);
 
@@ -39,8 +35,13 @@ class ExpenseController extends Controller
 
     public function update(Request $request, Expense $expense): RedirectResponse
     {
+        // Prevent editing auto-posted salary/cash-advance expenses
+        if ($expense->is_salary_payment || $expense->is_cash_advance) {
+            return back()->withErrors(['expense' => 'Auto-posted payroll expenses cannot be edited directly.']);
+        }
+
         $validated = $request->validate([
-            'category' => ['required', 'string', 'max:100'],
+            'category' => ['required', Rule::in(['Auto Repair', 'Fuel', 'Utilities', 'Maintenance', 'Supplies', 'Others'])],
             'description' => ['required', 'string', 'max:255'],
             'amount' => ['required', 'numeric', 'gt:0'],
             'payment_source' => ['required', Rule::in(['cash', 'gcash'])],
@@ -53,6 +54,11 @@ class ExpenseController extends Controller
 
     public function destroy(Expense $expense): RedirectResponse
     {
+        // Prevent deleting auto-posted payroll expenses
+        if ($expense->is_salary_payment || $expense->is_cash_advance) {
+            return back()->withErrors(['expense' => 'Auto-posted payroll expenses cannot be deleted directly.']);
+        }
+
         $expense->delete();
 
         return redirect()->route('dashboard')->with('success', 'Expense deleted successfully.');
