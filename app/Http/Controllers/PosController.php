@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CashAdvance;
 use App\Models\CollectionPayment;
 use App\Models\ContainerMovement;
 use App\Models\Customer;
@@ -38,10 +39,12 @@ class PosController extends Controller
             ->orderBy('name')
             ->get();
 
+        // All active employees with rate data (for payroll calculations)
         $employees = Employee::query()
             ->where('is_active', true)
             ->orderBy('name')
-            ->get();
+            ->get(['id', 'name', 'role', 'employee_type', 'daily_rate', 'ot_rate', 'late_rate',
+                   'sss_contribution', 'philhealth_contribution', 'pagibig_contribution', 'is_active']);
 
         $recentSales = Sale::query()
             ->with('customer:id,name')
@@ -128,10 +131,10 @@ class PosController extends Controller
             ->get();
 
         $history = Sale::query()
-            ->with('customer:id,name')
+            ->with(['customer:id,name', 'items.product:id,name,price', 'recorder:id,name', 'editor:id,name'])
             ->whereDate('sale_date', $historyDate)
             ->latest('id')
-            ->limit(30)
+            ->limit(50)
             ->get();
 
         $payrollToday = PayrollEntry::query()
@@ -145,6 +148,29 @@ class PosController extends Controller
             ->whereDate('expense_date', $today)
             ->latest('id')
             ->get();
+
+        // Cash advances (latest 100 for payroll tab)
+        $cashAdvances = CashAdvance::query()
+            ->with('employee:id,name')
+            ->latest('advance_date')
+            ->limit(100)
+            ->get();
+
+        // Period time logs for payroll process calculation
+        $periodTimeLogs = collect();
+        $periodEmployee = $request->query('period_employee');
+        $periodStart = $request->query('period_start');
+        $periodEnd = $request->query('period_end');
+
+        if ($periodEmployee && $periodStart && $periodEnd) {
+            $periodTimeLogs = PayrollEntry::query()
+                ->with('employee:id,name,daily_rate,ot_rate,late_rate,sss_contribution,philhealth_contribution,pagibig_contribution')
+                ->where('employee_id', $periodEmployee)
+                ->where('entry_type', 'time_log')
+                ->whereBetween('entry_date', [$periodStart, $periodEnd])
+                ->orderBy('entry_date')
+                ->get();
+        }
 
         $startDate = now()->subDays(6)->toDateString();
 
@@ -191,6 +217,11 @@ class PosController extends Controller
             'zreadTotals' => $zreadTotals,
             'dashboardDate' => $dashboardDate,
             'dashboardTotals' => $dashboardTotals,
+            'cashAdvances' => $cashAdvances,
+            'periodTimeLogs' => $periodTimeLogs,
+            'periodEmployee' => $periodEmployee,
+            'periodStart' => $periodStart,
+            'periodEnd' => $periodEnd,
         ]);
     }
 }
