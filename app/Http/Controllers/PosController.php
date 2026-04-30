@@ -12,6 +12,7 @@ use App\Models\InventoryCount;
 use App\Models\PayrollEntry;
 use App\Models\Product;
 use App\Models\Sale;
+use App\Models\User;
 use App\Models\WaterRestock;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -32,6 +33,8 @@ class PosController extends Controller
         $expensesTo    = $request->query('expenses_to', $today);
         $recordsFrom   = $request->query('records_from', $today);
         $recordsTo     = $request->query('records_to', $today);
+        $balancesFrom  = $request->query('balances_from');
+        $balancesTo    = $request->query('balances_to');
 
         $products = Product::query()
             ->where('is_active', true)
@@ -109,6 +112,9 @@ class PosController extends Controller
             ->selectRaw('SUM(credit_amount - paid_credit_amount) AS outstanding')
             ->whereNotNull('customer_id')
             ->where('status', 'completed')
+            ->when($balancesFrom && $balancesTo, function ($q) use ($balancesFrom, $balancesTo) {
+                $q->whereBetween('sale_date', [$balancesFrom, $balancesTo]);
+            })
             ->groupBy('customer_id')
             ->havingRaw('SUM(credit_amount - paid_credit_amount) > 0')
             ->with('customer:id,name')
@@ -120,6 +126,9 @@ class PosController extends Controller
             ->selectRaw("SUM(CASE WHEN movement_type = 'return' THEN quantity ELSE 0 END) AS returned")
             ->selectRaw("SUM(CASE WHEN movement_type = 'lost' THEN quantity ELSE 0 END) AS lost")
             ->whereNotNull('customer_id')
+            ->when($balancesFrom && $balancesTo, function ($q) use ($balancesFrom, $balancesTo) {
+                $q->whereBetween('movement_date', [$balancesFrom, $balancesTo]);
+            })
             ->groupBy('customer_id', 'container_type')
             ->havingRaw("SUM(CASE WHEN movement_type = 'borrow' THEN quantity ELSE 0 END) - SUM(CASE WHEN movement_type = 'return' THEN quantity ELSE 0 END) - SUM(CASE WHEN movement_type = 'lost' THEN quantity ELSE 0 END) > 0")
             ->with('customer:id,name')
@@ -199,6 +208,10 @@ class PosController extends Controller
 
         $startDate = now()->subDays(6)->toDateString();
 
+        $users = User::query()
+            ->orderBy('name')
+            ->get(['id', 'name', 'email', 'is_active']);
+
         $salesTrend = Sale::query()
             ->selectRaw('DATE(sale_date) as date')
             ->selectRaw('SUM(total_amount) as total')
@@ -226,9 +239,12 @@ class PosController extends Controller
             'customers' => $customers,
             'allCustomers' => $allCustomers,
             'employees' => $employees,
+            'users' => $users,
             'recentSales' => $recentSales,
             'unpaidBalances' => $unpaidBalances,
             'borrowedContainers' => $borrowedContainers,
+            'balancesFrom' => $balancesFrom,
+            'balancesTo' => $balancesTo,
             'inventoryToday' => $inventoryToday,
             'waterRestocksToday' => $waterRestocksToday,
             'history' => $history,
