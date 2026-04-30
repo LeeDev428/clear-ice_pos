@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+
 export const money = (value) => `PHP ${Number(value || 0).toFixed(2)}`;
 
 export const fmtDate = (d) => (d ? String(d).slice(0, 10) : '-');
@@ -21,7 +23,7 @@ export function SummaryCard({ icon, title, value }) {
     );
 }
 
-export function Input({ label, onChange, readOnly = false, ...props }) {
+export function Input({ label, onChange, readOnly = false, error, ...props }) {
     return (
         <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">{label}</label>
@@ -29,8 +31,11 @@ export function Input({ label, onChange, readOnly = false, ...props }) {
                 {...props}
                 readOnly={readOnly}
                 onChange={(event) => onChange?.(event.target.value)}
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-blue-500 focus:outline-none"
+                className={`w-full rounded-md border px-3 py-2 text-sm text-gray-800 focus:outline-none ${
+                    error ? 'border-red-400 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'
+                }`}
             />
+            {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
         </div>
     );
 }
@@ -93,6 +98,35 @@ export function DataTable({ title, icon, headers, rows }) {
                     </tbody>
                 </table>
             </div>
+        </div>
+    );
+}
+
+export function Toast({ message, type = 'success', onClose }) {
+    useEffect(() => {
+        const timer = setTimeout(onClose, 3500);
+        return () => clearTimeout(timer);
+    }, [message, onClose]);
+
+    return (
+        <div
+            className={`fixed right-4 top-4 z-[9999] flex max-w-sm items-start gap-3 rounded-lg border px-4 py-3 text-sm shadow-lg ${
+                type === 'success'
+                    ? 'border-green-200 bg-green-50 text-green-800'
+                    : 'border-red-200 bg-red-50 text-red-800'
+            }`}
+        >
+            <span className="mt-0.5 shrink-0 text-base font-bold">
+                {type === 'success' ? '✓' : '✗'}
+            </span>
+            <span className="flex-1">{message}</span>
+            <button
+                type="button"
+                onClick={onClose}
+                className="ml-1 shrink-0 text-base leading-none opacity-50 hover:opacity-100"
+            >
+                ✕
+            </button>
         </div>
     );
 }
