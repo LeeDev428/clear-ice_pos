@@ -22,12 +22,16 @@ class PosController extends Controller
     public function index(Request $request): Response
     {
         $today = now()->toDateString();
-        $historyDate = $request->query('date', $today);
-        $payrollDate = $request->query('payroll_date', $today);
-        $zreadDate = $request->query('zread_date', $today);
+        $historyFrom   = $request->query('history_from', $today);
+        $historyTo     = $request->query('history_to', $today);
+        $payrollFrom   = $request->query('payroll_from', $today);
+        $payrollTo     = $request->query('payroll_to', $today);
+        $zreadDate     = $request->query('zread_date', $today);
         $dashboardDate = $request->query('dashboard_date', $today);
-        $expensesDate = $request->query('expenses_date', $today);
-        $recordsDate = $request->query('records_date', $today);
+        $expensesFrom  = $request->query('expenses_from', $today);
+        $expensesTo    = $request->query('expenses_to', $today);
+        $recordsFrom   = $request->query('records_from', $today);
+        $recordsTo     = $request->query('records_to', $today);
 
         $products = Product::query()
             ->where('is_active', true)
@@ -139,20 +143,20 @@ class PosController extends Controller
 
         $history = Sale::query()
             ->with(['customer:id,name', 'items.product:id,name,price', 'recorder:id,name', 'editor:id,name'])
-            ->whereDate('sale_date', $historyDate)
+            ->whereBetween('sale_date', [$historyFrom, $historyTo])
             ->latest('id')
-            ->limit(50)
+            ->limit(200)
             ->get();
 
         $payrollToday = PayrollEntry::query()
             ->with('employee:id,name')
-            ->whereDate('entry_date', $payrollDate)
+            ->whereBetween('entry_date', [$payrollFrom, $payrollTo])
             ->latest('id')
-            ->limit(30)
+            ->limit(200)
             ->get();
 
         $expensesToday = Expense::query()
-            ->whereDate('expense_date', $expensesDate)
+            ->whereBetween('expense_date', [$expensesFrom, $expensesTo])
             ->latest('id')
             ->get();
 
@@ -166,13 +170,13 @@ class PosController extends Controller
         // Collections and container returns for selected date (Records tab)
         $collectionsOnDate = CollectionPayment::query()
             ->with('customer:id,name')
-            ->whereDate('payment_date', $recordsDate)
+            ->whereBetween('payment_date', [$recordsFrom, $recordsTo])
             ->latest('id')
             ->get();
 
         $containerReturnsOnDate = ContainerMovement::query()
             ->with('customer:id,name')
-            ->whereDate('movement_date', $recordsDate)
+            ->whereBetween('movement_date', [$recordsFrom, $recordsTo])
             ->where('movement_type', 'return')
             ->latest('id')
             ->get();
@@ -228,14 +232,18 @@ class PosController extends Controller
             'inventoryToday' => $inventoryToday,
             'waterRestocksToday' => $waterRestocksToday,
             'history' => $history,
-            'historyDate' => $historyDate,
+            'historyFrom' => $historyFrom,
+            'historyTo' => $historyTo,
             'payrollToday' => $payrollToday,
-            'payrollDate' => $payrollDate,
+            'payrollFrom' => $payrollFrom,
+            'payrollTo' => $payrollTo,
             'expensesToday' => $expensesToday,
-            'expensesDate' => $expensesDate,
+            'expensesFrom' => $expensesFrom,
+            'expensesTo' => $expensesTo,
             'collectionsOnDate' => $collectionsOnDate,
             'containerReturnsOnDate' => $containerReturnsOnDate,
-            'recordsDate' => $recordsDate,
+            'recordsFrom' => $recordsFrom,
+            'recordsTo' => $recordsTo,
             'salesTrend' => $salesTrend,
             'topProducts' => $topProducts,
             'totals' => $totals,
