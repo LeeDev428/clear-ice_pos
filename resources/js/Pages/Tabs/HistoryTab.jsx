@@ -40,7 +40,7 @@ export default function HistoryTab({
                     <tbody>
                         {history.map((row) => (
                             <tr key={row.id} className="border-t border-gray-200">
-                                <td className="px-3 py-2">{row.sale_date}</td>
+                                <td className="px-3 py-2">{(row.sale_date || '').slice(0, 10)}</td>
                                 <td className="px-3 py-2">{row.customer?.name ?? 'Walk-in'}</td>
                                 <td className="px-3 py-2 uppercase">{row.payment_method}</td>
                                 <td className="px-3 py-2">{money(row.total_amount)}</td>
