@@ -1,5 +1,15 @@
 export const money = (value) => `PHP ${Number(value || 0).toFixed(2)}`;
 
+export const fmtDate = (d) => (d ? String(d).slice(0, 10) : '-');
+
+export const fmtDateTime = (d) => {
+    if (!d) return '-';
+    const s = String(d);
+    const date = s.slice(0, 10);
+    const time = s.slice(11, 16);
+    return time ? `${date} ${time}` : date;
+};
+
 export function SummaryCard({ icon, title, value }) {
     return (
         <div className="rounded-md border border-gray-200 bg-white p-3">
