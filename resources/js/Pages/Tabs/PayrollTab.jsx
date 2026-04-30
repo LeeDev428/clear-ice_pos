@@ -110,7 +110,7 @@ export default function PayrollTab({
                         icon={<FiUsers />}
                         headers={['Date', 'Employee', 'Shift', 'Exp IN', 'Act IN', 'OT', 'Bonus', 'Late Deduction']}
                         rows={payrollToday.filter((r) => r.entry_type === 'time_log').map((row) => [
-                            row.entry_date,
+                            (row.entry_date || '').slice(0, 10),
                             row.employee?.name ?? '-',
                             row.shift_type === 'half_day' ? 'Half' : 'Full',
                             row.expected_in ?? '-',
@@ -212,7 +212,7 @@ export default function PayrollTab({
                                 ) : (
                                     (cashAdvances || []).map((ca) => (
                                         <tr key={ca.id} className="border-t border-gray-200">
-                                            <td className="px-3 py-2">{ca.advance_date}</td>
+                                            <td className="px-3 py-2">{(ca.advance_date || '').slice(0, 10)}</td>
                                             <td className="px-3 py-2">{ca.employee?.name ?? '-'}</td>
                                             <td className="px-3 py-2">{money(ca.amount)}</td>
                                             <td className="px-3 py-2">{money(ca.balance)}</td>
@@ -272,7 +272,7 @@ export default function PayrollTab({
                                     <tbody>
                                         {payrollPreview.rows.map(({ log, dayEarned, otEarned, bonus, late, earned, isHalf }) => (
                                             <tr key={log.id} className="border-t border-gray-200">
-                                                <td className="px-3 py-2">{log.entry_date}</td>
+                                                <td className="px-3 py-2">{(log.entry_date || '').slice(0, 10)}</td>
                                                 <td className="px-3 py-2">{isHalf ? 'Half' : 'Full'}</td>
                                                 <td className="px-3 py-2 text-right">{money(dayEarned)}</td>
                                                 <td className="px-3 py-2 text-right">{money(otEarned)}</td>
