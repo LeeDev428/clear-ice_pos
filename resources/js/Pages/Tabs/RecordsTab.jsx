@@ -1,4 +1,4 @@
-import { FiList, FiBox, FiSearch } from 'react-icons/fi';
+import { FiList, FiBox, FiSearch, FiRefreshCw } from 'react-icons/fi';
 import { Input, Select, money } from '@/Components/PosUI';
 
 export default function RecordsTab({
@@ -13,6 +13,11 @@ export default function RecordsTab({
     setRecordsSearch,
     containerSearch,
     setContainerSearch,
+    recordsDate,
+    setRecordsDate,
+    loadRecords,
+    collectionsOnDate,
+    containerReturnsOnDate,
 }) {
     return (
         <section className="space-y-4">
@@ -214,6 +219,86 @@ export default function RecordsTab({
                                 )}
                             </tbody>
                         </table>
+                    </div>
+                </div>
+            </div>
+
+            {/* Date-filtered records history */}
+            <div className="rounded-md border border-gray-200 bg-white p-4">
+                <h3 className="mb-3 text-lg font-semibold text-gray-900">Records History</h3>
+                <div className="mb-3 flex items-end gap-2">
+                    <div className="flex-1 max-w-xs">
+                        <Input
+                            label="View Records For Date"
+                            type="date"
+                            value={recordsDate}
+                            onChange={setRecordsDate}
+                        />
+                    </div>
+                    <button
+                        type="button"
+                        onClick={loadRecords}
+                        className="inline-flex items-center gap-1 rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                    >
+                        <FiRefreshCw size={14} /> View
+                    </button>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                    <div>
+                        <h4 className="mb-2 text-sm font-semibold text-gray-700">Collections on {recordsDate}</h4>
+                        <div className="overflow-x-auto">
+                            <table className="w-full border-collapse text-sm">
+                                <thead>
+                                    <tr className="bg-gray-100 text-left text-gray-700">
+                                        <th className="px-3 py-2">Customer</th>
+                                        <th className="px-3 py-2">Method</th>
+                                        <th className="px-3 py-2">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {(collectionsOnDate || []).length === 0 ? (
+                                        <tr><td colSpan={3} className="px-3 py-4 text-center text-gray-500">No collections</td></tr>
+                                    ) : (
+                                        (collectionsOnDate || []).map((col) => (
+                                            <tr key={col.id} className="border-t border-gray-200">
+                                                <td className="px-3 py-2">{col.customer?.name ?? '—'}</td>
+                                                <td className="px-3 py-2 uppercase">{col.payment_method}</td>
+                                                <td className="px-3 py-2">{money(col.amount)}</td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 className="mb-2 text-sm font-semibold text-gray-700">Container Returns on {recordsDate}</h4>
+                        <div className="overflow-x-auto">
+                            <table className="w-full border-collapse text-sm">
+                                <thead>
+                                    <tr className="bg-gray-100 text-left text-gray-700">
+                                        <th className="px-3 py-2">Customer</th>
+                                        <th className="px-3 py-2">Container</th>
+                                        <th className="px-3 py-2">Qty</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {(containerReturnsOnDate || []).length === 0 ? (
+                                        <tr><td colSpan={3} className="px-3 py-4 text-center text-gray-500">No returns</td></tr>
+                                    ) : (
+                                        (containerReturnsOnDate || []).map((ret) => (
+                                            <tr key={ret.id} className="border-t border-gray-200">
+                                                <td className="px-3 py-2">{ret.customer?.name ?? '—'}</td>
+                                                <td className="px-3 py-2">{ret.container_type}</td>
+                                                <td className="px-3 py-2">{ret.quantity}</td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
