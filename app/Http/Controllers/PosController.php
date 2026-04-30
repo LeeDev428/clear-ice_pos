@@ -14,6 +14,7 @@ use App\Models\Product;
 use App\Models\Sale;
 use App\Models\User;
 use App\Models\WaterRestock;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -235,6 +236,8 @@ class PosController extends Controller
 
         return Inertia::render('Dashboard', [
             'today' => $today,
+            'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
+            'status' => session('status'),
             'products' => $products,
             'customers' => $customers,
             'allCustomers' => $allCustomers,
