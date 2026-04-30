@@ -27,12 +27,16 @@ const TABS = [
 
 export default function Dashboard({
     today,
-    historyDate: historyDateProp,
-    payrollDate: payrollDateProp,
+    historyFrom: historyFromProp,
+    historyTo: historyToProp,
+    payrollFrom: payrollFromProp,
+    payrollTo: payrollToProp,
     zreadDate: zreadDateProp,
     dashboardDate: dashboardDateProp,
-    expensesDate: expensesDateProp,
-    recordsDate: recordsDateProp,
+    expensesFrom: expensesFromProp,
+    expensesTo: expensesToProp,
+    recordsFrom: recordsFromProp,
+    recordsTo: recordsToProp,
     products,
     customers,
     allCustomers,
@@ -60,12 +64,16 @@ export default function Dashboard({
 }) {
     const { flash } = usePage().props;
     const [activeTab, setActiveTab] = useState('Sales');
-    const [historyDate, setHistoryDate] = useState(historyDateProp || today);
-    const [payrollDate, setPayrollDate] = useState(payrollDateProp || today);
+    const [historyFrom, setHistoryFrom] = useState(historyFromProp || today);
+    const [historyTo, setHistoryTo] = useState(historyToProp || today);
+    const [payrollFrom, setPayrollFrom] = useState(payrollFromProp || today);
+    const [payrollTo, setPayrollTo] = useState(payrollToProp || today);
     const [zreadDate, setZreadDate] = useState(zreadDateProp || today);
     const [dashboardDate, setDashboardDate] = useState(dashboardDateProp || today);
-    const [expensesDate, setExpensesDate] = useState(expensesDateProp || today);
-    const [recordsDate, setRecordsDate] = useState(recordsDateProp || today);
+    const [expensesFrom, setExpensesFrom] = useState(expensesFromProp || today);
+    const [expensesTo, setExpensesTo] = useState(expensesToProp || today);
+    const [recordsFrom, setRecordsFrom] = useState(recordsFromProp || today);
+    const [recordsTo, setRecordsTo] = useState(recordsToProp || today);
     const [showCustomerModal, setShowCustomerModal] = useState(false);
     const [editCustomerTarget, setEditCustomerTarget] = useState(null);
     const [actualCashRemitted, setActualCashRemitted] = useState('');
@@ -400,11 +408,11 @@ export default function Dashboard({
     };
 
     const loadHistory = () => {
-        router.reload({ only: ['history', 'historyDate'], data: { date: historyDate } });
+        router.reload({ only: ['history', 'historyFrom', 'historyTo'], data: { history_from: historyFrom, history_to: historyTo } });
     };
 
     const loadPayroll = () => {
-        router.reload({ only: ['payrollToday', 'payrollDate'], data: { payroll_date: payrollDate } });
+        router.reload({ only: ['payrollToday', 'payrollFrom', 'payrollTo'], data: { payroll_from: payrollFrom, payroll_to: payrollTo } });
     };
 
     const loadZread = () => {
@@ -416,11 +424,11 @@ export default function Dashboard({
     };
 
     const loadExpenses = () => {
-        router.reload({ only: ['expensesToday', 'expensesDate'], data: { expenses_date: expensesDate } });
+        router.reload({ only: ['expensesToday', 'expensesFrom', 'expensesTo'], data: { expenses_from: expensesFrom, expenses_to: expensesTo } });
     };
 
     const loadRecords = () => {
-        router.reload({ only: ['collectionsOnDate', 'containerReturnsOnDate', 'recordsDate'], data: { records_date: recordsDate } });
+        router.reload({ only: ['collectionsOnDate', 'containerReturnsOnDate', 'recordsFrom', 'recordsTo'], data: { records_from: recordsFrom, records_to: recordsTo } });
     };
 
     const openEditCustomer = (customer) => {
@@ -741,8 +749,10 @@ export default function Dashboard({
                         expenseForm={expenseForm}
                         submitExpense={submitExpense}
                         expensesToday={expensesToday}
-                        expensesDate={expensesDate}
-                        setExpensesDate={setExpensesDate}
+                        expensesFrom={expensesFrom}
+                        setExpensesFrom={setExpensesFrom}
+                        expensesTo={expensesTo}
+                        setExpensesTo={setExpensesTo}
                         loadExpenses={loadExpenses}
                         openEditExpenseModal={openEditExpenseModal}
                         deleteExpense={deleteExpense}
@@ -762,8 +772,10 @@ export default function Dashboard({
                         setRecordsSearch={setRecordsSearch}
                         containerSearch={containerSearch}
                         setContainerSearch={setContainerSearch}
-                        recordsDate={recordsDate}
-                        setRecordsDate={setRecordsDate}
+                        recordsFrom={recordsFrom}
+                        setRecordsFrom={setRecordsFrom}
+                        recordsTo={recordsTo}
+                        setRecordsTo={setRecordsTo}
                         loadRecords={loadRecords}
                         collectionsOnDate={collectionsOnDate}
                         containerReturnsOnDate={containerReturnsOnDate}
@@ -773,8 +785,10 @@ export default function Dashboard({
                 {activeTab === 'History' && (
                     <HistoryTab
                         history={history}
-                        historyDate={historyDate}
-                        setHistoryDate={setHistoryDate}
+                        historyFrom={historyFrom}
+                        setHistoryFrom={setHistoryFrom}
+                        historyTo={historyTo}
+                        setHistoryTo={setHistoryTo}
                         loadHistory={loadHistory}
                         openVoidModal={openVoidModal}
                         openEditSaleModal={openEditSaleModal}
@@ -813,8 +827,10 @@ export default function Dashboard({
                         setPayrollSubTab={setPayrollSubTab}
                         payrollForm={payrollForm}
                         submitPayroll={submitPayroll}
-                        payrollDate={payrollDate}
-                        setPayrollDate={setPayrollDate}
+                        payrollFrom={payrollFrom}
+                        setPayrollFrom={setPayrollFrom}
+                        payrollTo={payrollTo}
+                        setPayrollTo={setPayrollTo}
                         loadPayroll={loadPayroll}
                         payrollToday={payrollToday}
                         employees={employees}
