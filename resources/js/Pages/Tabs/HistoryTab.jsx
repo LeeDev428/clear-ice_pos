@@ -3,8 +3,10 @@ import { Input, money, fmtDateTime } from '@/Components/PosUI';
 
 export default function HistoryTab({
     history,
-    historyDate,
-    setHistoryDate,
+    historyFrom,
+    setHistoryFrom,
+    historyTo,
+    setHistoryTo,
     loadHistory,
     openVoidModal,
     openEditSaleModal,
@@ -15,7 +17,8 @@ export default function HistoryTab({
         <section className="rounded-md border border-gray-200 bg-white p-4">
             <h3 className="mb-3 text-lg font-semibold text-gray-900">History & Void</h3>
             <div className="mb-3 flex flex-wrap items-end gap-3">
-                <Input label="Date" type="date" value={historyDate} onChange={setHistoryDate} />
+                <Input label="From" type="date" value={historyFrom} onChange={setHistoryFrom} />
+                <Input label="To" type="date" value={historyTo} onChange={setHistoryTo} />
                 <button
                     type="button"
                     onClick={loadHistory}
