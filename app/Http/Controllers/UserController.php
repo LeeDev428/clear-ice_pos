@@ -23,7 +23,7 @@ class UserController extends Controller
             'is_active' => true,
         ]);
 
-        return back()->with('success', 'User created.');
+        return redirect()->route('dashboard')->with('success', 'User created.');
     }
 
     public function update(Request $request, User $user)
@@ -40,9 +40,9 @@ class UserController extends Controller
 
         $data = $request->validate($rules);
 
-        $user->name      = $data['name'];
-        $user->email     = $data['email'];
-        if (isset($data['is_active'])) {
+        $user->name  = $data['name'];
+        $user->email = $data['email'];
+        if (array_key_exists('is_active', $data)) {
             $user->is_active = $data['is_active'];
         }
         if ($request->filled('password')) {
@@ -50,7 +50,7 @@ class UserController extends Controller
         }
         $user->save();
 
-        return back()->with('success', 'User updated.');
+        return redirect()->route('dashboard')->with('success', 'User updated.');
     }
 
     public function destroy(User $user)
@@ -58,6 +58,6 @@ class UserController extends Controller
         $user->is_active = false;
         $user->save();
 
-        return back()->with('success', 'User deactivated.');
+        return redirect()->route('dashboard')->with('success', 'User deactivated.');
     }
 }
