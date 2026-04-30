@@ -50,7 +50,7 @@ class PayrollController extends Controller
 
             if ($diffMinutes > 0) {
                 $lateMinutes = $diffMinutes;
-                $units = (int) ceil($diffMinutes / 30);
+                $units = (int) floor($diffMinutes / 30);
                 $employee = Employee::find($validated['employee_id']);
                 $ratePerUnit = (float) ($employee->late_rate ?? 0);
                 if ($ratePerUnit == 0.0) {
