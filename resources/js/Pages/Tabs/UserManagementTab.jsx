@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FiEdit2, FiUserX, FiUserCheck, FiPlus } from 'react-icons/fi';
+import { FiEdit2, FiUserX, FiUserCheck, FiPlus, FiEye, FiEyeOff } from 'react-icons/fi';
 import { Input } from '@/Components/PosUI';
 
 export default function UserManagementTab({
@@ -15,6 +15,8 @@ export default function UserManagementTab({
     setEditUserTarget,
 }) {
     const [search, setSearch] = useState('');
+    const [showPwd, setShowPwd] = useState(false);
+    const [showConfirmPwd, setShowConfirmPwd] = useState(false);
 
     const filtered = (users || []).filter(
         (u) =>
@@ -142,19 +144,51 @@ export default function UserManagementTab({
                                 onChange={(v) => userMgmtForm.setData('email', v)}
                                 error={userMgmtForm.errors.email}
                             />
-                            <Input
-                                label={editUserTarget ? 'New Password (leave blank to keep current)' : 'Password'}
-                                type="password"
-                                value={userMgmtForm.data.password}
-                                onChange={(v) => userMgmtForm.setData('password', v)}
-                                error={userMgmtForm.errors.password}
-                            />
-                            <Input
-                                label="Confirm Password"
-                                type="password"
-                                value={userMgmtForm.data.password_confirmation}
-                                onChange={(v) => userMgmtForm.setData('password_confirmation', v)}
-                            />
+                            <div>
+                                <label className="mb-1 block text-sm font-medium text-gray-700">
+                                    {editUserTarget ? 'New Password (leave blank to keep current)' : 'Password'}
+                                </label>
+                                <div className="relative">
+                                    <input
+                                        type={showPwd ? 'text' : 'password'}
+                                        value={userMgmtForm.data.password}
+                                        onChange={(e) => userMgmtForm.setData('password', e.target.value)}
+                                        className={`w-full rounded-md border px-3 py-2 pr-10 text-sm text-gray-800 focus:outline-none ${
+                                            userMgmtForm.errors.password ? 'border-red-400 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'
+                                        }`}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPwd((v) => !v)}
+                                        className="absolute inset-y-0 right-2 flex items-center text-gray-400 hover:text-gray-600"
+                                        tabIndex={-1}
+                                    >
+                                        {showPwd ? <FiEyeOff size={16} /> : <FiEye size={16} />}
+                                    </button>
+                                </div>
+                                {userMgmtForm.errors.password && (
+                                    <p className="mt-1 text-xs text-red-600">{userMgmtForm.errors.password}</p>
+                                )}
+                            </div>
+                            <div>
+                                <label className="mb-1 block text-sm font-medium text-gray-700">Confirm Password</label>
+                                <div className="relative">
+                                    <input
+                                        type={showConfirmPwd ? 'text' : 'password'}
+                                        value={userMgmtForm.data.password_confirmation}
+                                        onChange={(e) => userMgmtForm.setData('password_confirmation', e.target.value)}
+                                        className="w-full rounded-md border border-gray-300 px-3 py-2 pr-10 text-sm text-gray-800 focus:border-blue-500 focus:outline-none"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowConfirmPwd((v) => !v)}
+                                        className="absolute inset-y-0 right-2 flex items-center text-gray-400 hover:text-gray-600"
+                                        tabIndex={-1}
+                                    >
+                                        {showConfirmPwd ? <FiEyeOff size={16} /> : <FiEye size={16} />}
+                                    </button>
+                                </div>
+                            </div>
                             <div className="flex justify-end gap-3 pt-2">
                                 <button
                                     type="button"
