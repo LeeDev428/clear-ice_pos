@@ -166,7 +166,7 @@ export default function InventoryTab({
                         icon={<FiBox />}
                         headers={['Date', 'Item', 'Qty', 'Unit']}
                         rows={waterRestocksToday.map((row) => [
-                            row.restock_date,
+                            (row.restock_date || '').slice(0, 10),
                             row.item_name,
                             row.quantity,
                             row.unit,
