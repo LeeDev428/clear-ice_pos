@@ -5,8 +5,10 @@ export default function ExpensesTab({
     expenseForm,
     submitExpense,
     expensesToday,
-    expensesDate,
-    setExpensesDate,
+    expensesFrom,
+    setExpensesFrom,
+    expensesTo,
+    setExpensesTo,
     loadExpenses,
     openEditExpenseModal,
     deleteExpense,
@@ -66,14 +68,22 @@ export default function ExpensesTab({
             </form>
 
             <div>
-                <h4 className="mb-2 text-sm font-semibold text-gray-700">Today&apos;s Expenses</h4>
-            <div className="mb-3 flex items-end gap-2">
-                <div className="flex-1 max-w-xs">
+                <h4 className="mb-2 text-sm font-semibold text-gray-700">Expenses</h4>
+            <div className="mb-3 flex flex-wrap items-end gap-2">
+                <div>
                     <Input
-                        label="View Expenses For Date"
+                        label="From"
                         type="date"
-                        value={expensesDate}
-                        onChange={setExpensesDate}
+                        value={expensesFrom}
+                        onChange={setExpensesFrom}
+                    />
+                </div>
+                <div>
+                    <Input
+                        label="To"
+                        type="date"
+                        value={expensesTo}
+                        onChange={setExpensesTo}
                     />
                 </div>
                 <button
