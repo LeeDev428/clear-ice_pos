@@ -11,6 +11,7 @@ import HistoryTab from './Tabs/HistoryTab';
 import DashboardTab from './Tabs/DashboardTab';
 import ZReadTab from './Tabs/ZReadTab';
 import PayrollTab from './Tabs/PayrollTab';
+import CustomerTab from './Tabs/CustomerTab';
 
 const TABS = [
     'Sales',
@@ -21,6 +22,7 @@ const TABS = [
     'Dashboard',
     'Z-Read',
     'Payroll',
+    'Customers',
 ];
 
 export default function Dashboard({
@@ -29,8 +31,11 @@ export default function Dashboard({
     payrollDate: payrollDateProp,
     zreadDate: zreadDateProp,
     dashboardDate: dashboardDateProp,
+    expensesDate: expensesDateProp,
+    recordsDate: recordsDateProp,
     products,
     customers,
+    allCustomers,
     employees,
     recentSales,
     unpaidBalances,
@@ -40,6 +45,8 @@ export default function Dashboard({
     history,
     payrollToday,
     expensesToday,
+    collectionsOnDate,
+    containerReturnsOnDate,
     salesTrend,
     topProducts,
     totals,
@@ -57,6 +64,10 @@ export default function Dashboard({
     const [payrollDate, setPayrollDate] = useState(payrollDateProp || today);
     const [zreadDate, setZreadDate] = useState(zreadDateProp || today);
     const [dashboardDate, setDashboardDate] = useState(dashboardDateProp || today);
+    const [expensesDate, setExpensesDate] = useState(expensesDateProp || today);
+    const [recordsDate, setRecordsDate] = useState(recordsDateProp || today);
+    const [showCustomerModal, setShowCustomerModal] = useState(false);
+    const [editCustomerTarget, setEditCustomerTarget] = useState(null);
     const [actualCashRemitted, setActualCashRemitted] = useState('');
     const [inventoryMode, setInventoryMode] = useState('daily');
     const [showVoidModal, setShowVoidModal] = useState(false);
@@ -188,6 +199,13 @@ export default function Dashboard({
         advance_date: today,
         amount: '',
         notes: '',
+    });
+
+    const customerForm = useForm({
+        name: '',
+        phone: '',
+        address: '',
+        is_walk_in: false,
     });
 
     const editSaleForm = useForm({
@@ -395,6 +413,49 @@ export default function Dashboard({
 
     const loadDashboard = () => {
         router.reload({ only: ['dashboardTotals', 'dashboardDate'], data: { dashboard_date: dashboardDate } });
+    };
+
+    const loadExpenses = () => {
+        router.reload({ only: ['expensesToday', 'expensesDate'], data: { expenses_date: expensesDate } });
+    };
+
+    const loadRecords = () => {
+        router.reload({ only: ['collectionsOnDate', 'containerReturnsOnDate', 'recordsDate'], data: { records_date: recordsDate } });
+    };
+
+    const openEditCustomer = (customer) => {
+        setEditCustomerTarget(customer);
+        customerForm.setData({
+            name: customer.name || '',
+            phone: customer.phone || '',
+            address: customer.address || '',
+            is_walk_in: !!customer.is_walk_in,
+        });
+        setShowCustomerModal(true);
+    };
+
+    const submitCustomer = (event) => {
+        event.preventDefault();
+        if (editCustomerTarget) {
+            customerForm.patch(route('customers.update', editCustomerTarget.id), {
+                preserveScroll: true,
+                onSuccess: () => setShowCustomerModal(false),
+            });
+        } else {
+            customerForm.post(route('customers.store'), {
+                preserveScroll: true,
+                onSuccess: () => { setShowCustomerModal(false); customerForm.reset(); },
+            });
+        }
+    };
+
+    const deactivateCustomer = (customer) => {
+        if (!confirm(`Deactivate customer: ${customer.name}?`)) return;
+        router.delete(route('customers.destroy', customer.id), { preserveScroll: true });
+    };
+
+    const reactivateCustomer = (customer) => {
+        router.patch(route('customers.update', customer.id), { ...customer, is_active: true }, { preserveScroll: true });
     };
 
     const openVoidModal = (sale) => {
@@ -680,6 +741,9 @@ export default function Dashboard({
                         expenseForm={expenseForm}
                         submitExpense={submitExpense}
                         expensesToday={expensesToday}
+                        expensesDate={expensesDate}
+                        setExpensesDate={setExpensesDate}
+                        loadExpenses={loadExpenses}
                         openEditExpenseModal={openEditExpenseModal}
                         deleteExpense={deleteExpense}
                     />
@@ -698,6 +762,11 @@ export default function Dashboard({
                         setRecordsSearch={setRecordsSearch}
                         containerSearch={containerSearch}
                         setContainerSearch={setContainerSearch}
+                        recordsDate={recordsDate}
+                        setRecordsDate={setRecordsDate}
+                        loadRecords={loadRecords}
+                        collectionsOnDate={collectionsOnDate}
+                        containerReturnsOnDate={containerReturnsOnDate}
                     />
                 )}
 
@@ -775,6 +844,21 @@ export default function Dashboard({
                         deductHDMF={deductHDMF}
                         setDeductHDMF={setDeductHDMF}
                         submitFinalizePayroll={submitFinalizePayroll}
+                    />
+                )}
+
+                {activeTab === 'Customers' && (
+                    <CustomerTab
+                        allCustomers={allCustomers}
+                        customerForm={customerForm}
+                        submitCustomer={submitCustomer}
+                        openEditCustomer={openEditCustomer}
+                        deactivateCustomer={deactivateCustomer}
+                        reactivateCustomer={reactivateCustomer}
+                        showCustomerModal={showCustomerModal}
+                        setShowCustomerModal={setShowCustomerModal}
+                        editCustomerTarget={editCustomerTarget}
+                        setEditCustomerTarget={setEditCustomerTarget}
                     />
                 )}
             </div>
