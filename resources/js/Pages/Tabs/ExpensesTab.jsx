@@ -1,10 +1,13 @@
-import { FiEdit2, FiX } from 'react-icons/fi';
+import { FiEdit2, FiX, FiRefreshCw } from 'react-icons/fi';
 import { Input, Select, money } from '@/Components/PosUI';
 
 export default function ExpensesTab({
     expenseForm,
     submitExpense,
     expensesToday,
+    expensesDate,
+    setExpensesDate,
+    loadExpenses,
     openEditExpenseModal,
     deleteExpense,
 }) {
@@ -64,6 +67,23 @@ export default function ExpensesTab({
 
             <div>
                 <h4 className="mb-2 text-sm font-semibold text-gray-700">Today&apos;s Expenses</h4>
+            <div className="mb-3 flex items-end gap-2">
+                <div className="flex-1 max-w-xs">
+                    <Input
+                        label="View Expenses For Date"
+                        type="date"
+                        value={expensesDate}
+                        onChange={setExpensesDate}
+                    />
+                </div>
+                <button
+                    type="button"
+                    onClick={loadExpenses}
+                    className="inline-flex items-center gap-1 rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                >
+                    <FiRefreshCw size={14} /> View
+                </button>
+            </div>
                 <div className="overflow-x-auto">
                     <table className="w-full border-collapse text-sm">
                         <thead>
