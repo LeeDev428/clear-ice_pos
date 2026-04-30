@@ -13,8 +13,10 @@ export default function RecordsTab({
     setRecordsSearch,
     containerSearch,
     setContainerSearch,
-    recordsDate,
-    setRecordsDate,
+    recordsFrom,
+    setRecordsFrom,
+    recordsTo,
+    setRecordsTo,
     loadRecords,
     collectionsOnDate,
     containerReturnsOnDate,
@@ -226,13 +228,21 @@ export default function RecordsTab({
             {/* Date-filtered records history */}
             <div className="rounded-md border border-gray-200 bg-white p-4">
                 <h3 className="mb-3 text-lg font-semibold text-gray-900">Records History</h3>
-                <div className="mb-3 flex items-end gap-2">
-                    <div className="flex-1 max-w-xs">
+                <div className="mb-3 flex flex-wrap items-end gap-2">
+                    <div>
                         <Input
-                            label="View Records For Date"
+                            label="From"
                             type="date"
-                            value={recordsDate}
-                            onChange={setRecordsDate}
+                            value={recordsFrom}
+                            onChange={setRecordsFrom}
+                        />
+                    </div>
+                    <div>
+                        <Input
+                            label="To"
+                            type="date"
+                            value={recordsTo}
+                            onChange={setRecordsTo}
                         />
                     </div>
                     <button
@@ -246,7 +256,7 @@ export default function RecordsTab({
 
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                     <div>
-                        <h4 className="mb-2 text-sm font-semibold text-gray-700">Collections on {recordsDate}</h4>
+                        <h4 className="mb-2 text-sm font-semibold text-gray-700">Collections ({recordsFrom} – {recordsTo})</h4>
                         <div className="overflow-x-auto">
                             <table className="w-full border-collapse text-sm">
                                 <thead>
@@ -274,7 +284,7 @@ export default function RecordsTab({
                     </div>
 
                     <div>
-                        <h4 className="mb-2 text-sm font-semibold text-gray-700">Container Returns on {recordsDate}</h4>
+                        <h4 className="mb-2 text-sm font-semibold text-gray-700">Container Returns ({recordsFrom} – {recordsTo})</h4>
                         <div className="overflow-x-auto">
                             <table className="w-full border-collapse text-sm">
                                 <thead>
