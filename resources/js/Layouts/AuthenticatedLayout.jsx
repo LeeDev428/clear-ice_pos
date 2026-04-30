@@ -63,7 +63,7 @@ export default function AuthenticatedLayout({ header, children }) {
 
                                     <Dropdown.Content>
                                         <Dropdown.Link
-                                            href={route('profile.edit')}
+                                            href={route('dashboard') + '?tab=Profile'}
                                         >
                                             Profile
                                         </Dropdown.Link>
