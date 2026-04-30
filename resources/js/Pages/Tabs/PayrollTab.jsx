@@ -6,8 +6,10 @@ export default function PayrollTab({
     setPayrollSubTab,
     payrollForm,
     submitPayroll,
-    payrollDate,
-    setPayrollDate,
+    payrollFrom,
+    setPayrollFrom,
+    payrollTo,
+    setPayrollTo,
     loadPayroll,
     payrollToday,
     employees,
@@ -100,7 +102,8 @@ export default function PayrollTab({
                         </div>
                     </form>
                     <div className="mb-3 flex flex-wrap items-end gap-3">
-                        <Input label="Payroll Date" type="date" value={payrollDate} onChange={setPayrollDate} />
+                        <Input label="From" type="date" value={payrollFrom} onChange={setPayrollFrom} />
+                        <Input label="To" type="date" value={payrollTo} onChange={setPayrollTo} />
                         <button type="button" onClick={loadPayroll} className="inline-flex items-center gap-2 rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">
                             <FiRefreshCw /> View
                         </button>
