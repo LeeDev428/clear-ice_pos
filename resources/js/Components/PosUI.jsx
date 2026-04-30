@@ -104,29 +104,80 @@ export function DataTable({ title, icon, headers, rows }) {
 
 export function Toast({ message, type = 'success', onClose }) {
     useEffect(() => {
-        const timer = setTimeout(onClose, 3500);
+        const timer = setTimeout(onClose, 4000);
         return () => clearTimeout(timer);
     }, [message, onClose]);
 
+    const isSuccess = type === 'success';
+
     return (
         <div
-            className={`fixed right-4 top-4 z-[9999] flex max-w-sm items-start gap-3 rounded-lg border px-4 py-3 text-sm shadow-lg ${
-                type === 'success'
-                    ? 'border-green-200 bg-green-50 text-green-800'
-                    : 'border-red-200 bg-red-50 text-red-800'
+            style={{ animation: 'slideInRight 0.3s ease-out' }}
+            className={`fixed right-5 top-5 z-[9999] flex w-80 items-start gap-4 rounded-xl px-5 py-4 shadow-2xl ${
+                isSuccess
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-red-600 text-white'
             }`}
         >
-            <span className="mt-0.5 shrink-0 text-base font-bold">
-                {type === 'success' ? '✓' : '✗'}
+            <span className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
+                isSuccess ? 'bg-white/20' : 'bg-white/20'
+            }`}>
+                {isSuccess ? '✓' : '✕'}
             </span>
-            <span className="flex-1">{message}</span>
+            <div className="flex-1">
+                <p className="text-sm font-semibold leading-snug">{message}</p>
+                <p className="mt-0.5 text-xs opacity-75">{isSuccess ? 'Operation successful' : 'Something went wrong'}</p>
+            </div>
             <button
                 type="button"
                 onClick={onClose}
-                className="ml-1 shrink-0 text-base leading-none opacity-50 hover:opacity-100"
+                className="ml-1 shrink-0 text-lg leading-none opacity-60 hover:opacity-100"
             >
                 ✕
             </button>
+            <style>{`@keyframes slideInRight { from { transform: translateX(110%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }`}</style>
+        </div>
+    );
+}
+
+export function ConfirmDialog({ title, message, confirmLabel = 'Confirm', variant = 'danger', onConfirm, onCancel }) {
+    return (
+        <div className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div
+                style={{ animation: 'fadeScaleIn 0.2s ease-out' }}
+                className="mx-4 w-full max-w-md rounded-2xl bg-white shadow-2xl"
+            >
+                <div className={`flex items-center gap-3 rounded-t-2xl px-6 py-5 ${variant === 'danger' ? 'bg-red-50' : 'bg-blue-50'}`}>
+                    <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xl ${variant === 'danger' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}>
+                        {variant === 'danger' ? '⚠' : 'ℹ'}
+                    </span>
+                    <h3 className="text-base font-bold text-gray-900">{title}</h3>
+                </div>
+                <div className="px-6 py-5">
+                    <p className="text-sm text-gray-600 leading-relaxed">{message}</p>
+                </div>
+                <div className="flex justify-end gap-3 rounded-b-2xl border-t border-gray-100 px-6 py-4">
+                    <button
+                        type="button"
+                        onClick={onCancel}
+                        className="rounded-lg border border-gray-300 px-5 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        type="button"
+                        onClick={onConfirm}
+                        className={`rounded-lg px-5 py-2 text-sm font-semibold text-white transition-colors ${
+                            variant === 'danger'
+                                ? 'bg-red-600 hover:bg-red-700'
+                                : 'bg-blue-600 hover:bg-blue-700'
+                        }`}
+                    >
+                        {confirmLabel}
+                    </button>
+                </div>
+            </div>
+            <style>{`@keyframes fadeScaleIn { from { transform: scale(0.92); opacity: 0; } to { transform: scale(1); opacity: 1; } }`}</style>
         </div>
     );
 }
