@@ -1,5 +1,5 @@
 import { FiBox } from 'react-icons/fi';
-import { Input, Select, DataTable } from '@/Components/PosUI';
+import { Input, Select, DataTable, fmtDateTime } from '@/Components/PosUI';
 
 export default function InventoryTab({
     inventoryForm,
@@ -166,7 +166,7 @@ export default function InventoryTab({
                         icon={<FiBox />}
                         headers={['Date', 'Item', 'Qty', 'Unit']}
                         rows={waterRestocksToday.map((row) => [
-                            (row.restock_date || '').slice(0, 10),
+                            fmtDateTime(row.created_at),
                             row.item_name,
                             row.quantity,
                             row.unit,
