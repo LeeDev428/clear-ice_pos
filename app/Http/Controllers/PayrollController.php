@@ -48,12 +48,16 @@ class PayrollController extends Controller
             $actual = strtotime('2000-01-01 ' . $validated['actual_in']);
             $diffMinutes = (int) max(0, ($actual - $expected) / 60);
 
-            if ($diffMinutes > 30) {
+            if ($diffMinutes > 0) {
                 $lateMinutes = $diffMinutes;
-                $extraMinutes = $diffMinutes - 30;
-                $units = (int) ceil($extraMinutes / 30);
+                $units = (int) ceil($diffMinutes / 30);
                 $employee = Employee::find($validated['employee_id']);
-                $lateDeduction = $units * (float) ($employee->late_rate ?? 0);
+                $ratePerUnit = (float) ($employee->late_rate ?? 0);
+                if ($ratePerUnit == 0.0) {
+                    // Fallback: derive from daily rate — one 30-min late unit = daily_rate / 16
+                    $ratePerUnit = (float) ($employee->daily_rate ?? 0) / 16;
+                }
+                $lateDeduction = $units * $ratePerUnit;
             }
         }
 
