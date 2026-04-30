@@ -26,6 +26,8 @@ class PosController extends Controller
         $payrollDate = $request->query('payroll_date', $today);
         $zreadDate = $request->query('zread_date', $today);
         $dashboardDate = $request->query('dashboard_date', $today);
+        $expensesDate = $request->query('expenses_date', $today);
+        $recordsDate = $request->query('records_date', $today);
 
         $products = Product::query()
             ->where('is_active', true)
@@ -38,6 +40,11 @@ class PosController extends Controller
             ->orderBy('is_walk_in')
             ->orderBy('name')
             ->get();
+
+        $allCustomers = Customer::query()
+            ->orderBy('is_walk_in')
+            ->orderBy('name')
+            ->get(['id', 'name', 'phone', 'address', 'is_walk_in', 'is_active']);
 
         // All active employees with rate data (for payroll calculations)
         $employees = Employee::query()
@@ -145,7 +152,7 @@ class PosController extends Controller
             ->get();
 
         $expensesToday = Expense::query()
-            ->whereDate('expense_date', $today)
+            ->whereDate('expense_date', $expensesDate)
             ->latest('id')
             ->get();
 
@@ -154,6 +161,20 @@ class PosController extends Controller
             ->with('employee:id,name')
             ->latest('advance_date')
             ->limit(100)
+            ->get();
+
+        // Collections and container returns for selected date (Records tab)
+        $collectionsOnDate = CollectionPayment::query()
+            ->with('customer:id,name')
+            ->whereDate('payment_date', $recordsDate)
+            ->latest('id')
+            ->get();
+
+        $containerReturnsOnDate = ContainerMovement::query()
+            ->with('customer:id,name')
+            ->whereDate('movement_date', $recordsDate)
+            ->where('movement_type', 'return')
+            ->latest('id')
             ->get();
 
         // Period time logs for payroll process calculation
@@ -199,6 +220,7 @@ class PosController extends Controller
             'today' => $today,
             'products' => $products,
             'customers' => $customers,
+            'allCustomers' => $allCustomers,
             'employees' => $employees,
             'recentSales' => $recentSales,
             'unpaidBalances' => $unpaidBalances,
@@ -210,6 +232,10 @@ class PosController extends Controller
             'payrollToday' => $payrollToday,
             'payrollDate' => $payrollDate,
             'expensesToday' => $expensesToday,
+            'expensesDate' => $expensesDate,
+            'collectionsOnDate' => $collectionsOnDate,
+            'containerReturnsOnDate' => $containerReturnsOnDate,
+            'recordsDate' => $recordsDate,
             'salesTrend' => $salesTrend,
             'topProducts' => $topProducts,
             'totals' => $totals,
