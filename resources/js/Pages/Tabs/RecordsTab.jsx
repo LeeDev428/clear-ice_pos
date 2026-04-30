@@ -9,6 +9,11 @@ export default function RecordsTab({
     customers,
     unpaidBalances,
     borrowedContainers,
+    balancesFrom,
+    setBalancesFrom,
+    balancesTo,
+    setBalancesTo,
+    loadBalances,
     recordsSearch,
     setRecordsSearch,
     containerSearch,
@@ -130,97 +135,128 @@ export default function RecordsTab({
                 </form>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                <div className="rounded-md border border-gray-200 bg-white p-4">
-                    <h4 className="mb-2 flex items-center gap-2 text-base font-semibold text-gray-900">
-                        <FiList /> Unpaid Balances
-                    </h4>
-                    <div className="mb-2">
-                        <div className="relative">
-                            <FiSearch className="absolute left-3 top-2.5 text-gray-400" size={14} />
-                            <input
-                                type="text"
-                                placeholder="Search customer..."
-                                value={recordsSearch}
-                                onChange={(e) => setRecordsSearch(e.target.value)}
-                                className="w-full rounded-md border border-gray-300 pl-8 pr-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                            />
-                        </div>
-                    </div>
-                    <div className="overflow-x-auto">
-                        <table className="w-full border-collapse text-sm">
-                            <thead>
-                                <tr className="bg-gray-100 text-left text-gray-700">
-                                    <th className="px-3 py-2">Customer</th>
-                                    <th className="px-3 py-2">Outstanding</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {unpaidBalances
-                                    .filter((row) =>
-                                        !recordsSearch || (row.customer?.name || '').toLowerCase().includes(recordsSearch.toLowerCase())
-                                    )
-                                    .map((row, i) => (
-                                        <tr key={`ub-${i}`} className="border-t border-gray-200">
-                                            <td className="px-3 py-2">{row.customer?.name ?? 'Unknown'}</td>
-                                            <td className="px-3 py-2">{money(row.outstanding)}</td>
-                                        </tr>
-                                    ))
-                                }
-                                {unpaidBalances.filter((row) =>
-                                    !recordsSearch || (row.customer?.name || '').toLowerCase().includes(recordsSearch.toLowerCase())
-                                ).length === 0 && (
-                                    <tr><td colSpan={2} className="px-3 py-4 text-center text-gray-500">No data</td></tr>
-                                )}
-                            </tbody>
-                        </table>
+            <div className="rounded-md border border-gray-200 bg-white p-4">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                    <h3 className="text-lg font-semibold text-gray-900">Outstanding Overview</h3>
+                    <div className="flex flex-wrap items-end gap-2">
+                        <Input
+                            label="From"
+                            type="date"
+                            value={balancesFrom}
+                            onChange={setBalancesFrom}
+                        />
+                        <Input
+                            label="To"
+                            type="date"
+                            value={balancesTo}
+                            onChange={setBalancesTo}
+                        />
+                        <button
+                            type="button"
+                            onClick={loadBalances}
+                            className="inline-flex items-center gap-1 rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        >
+                            <FiRefreshCw size={14} /> View
+                        </button>
                     </div>
                 </div>
-                <div className="rounded-md border border-gray-200 bg-white p-4">
-                    <h4 className="mb-2 flex items-center gap-2 text-base font-semibold text-gray-900">
-                        <FiBox /> Borrowed Containers
-                    </h4>
-                    <div className="mb-2">
-                        <div className="relative">
-                            <FiSearch className="absolute left-3 top-2.5 text-gray-400" size={14} />
-                            <input
-                                type="text"
-                                placeholder="Search customer..."
-                                value={containerSearch}
-                                onChange={(e) => setContainerSearch(e.target.value)}
-                                className="w-full rounded-md border border-gray-300 pl-8 pr-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                            />
+                {(balancesFrom || balancesTo) && (
+                    <p className="mb-3 text-xs text-gray-500">
+                        Showing data{balancesFrom ? ` from ${balancesFrom}` : ''}{balancesTo ? ` to ${balancesTo}` : ''}
+                    </p>
+                )}
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                    <div>
+                        <h4 className="mb-2 flex items-center gap-2 text-base font-semibold text-gray-900">
+                            <FiList /> Unpaid Balances
+                        </h4>
+                        <div className="mb-2">
+                            <div className="relative">
+                                <FiSearch className="absolute left-3 top-2.5 text-gray-400" size={14} />
+                                <input
+                                    type="text"
+                                    placeholder="Search customer..."
+                                    value={recordsSearch}
+                                    onChange={(e) => setRecordsSearch(e.target.value)}
+                                    className="w-full rounded-md border border-gray-300 pl-8 pr-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                                />
+                            </div>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full border-collapse text-sm">
+                                <thead>
+                                    <tr className="bg-gray-100 text-left text-gray-700">
+                                        <th className="px-3 py-2">Customer</th>
+                                        <th className="px-3 py-2">Outstanding</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {unpaidBalances
+                                        .filter((row) =>
+                                            !recordsSearch || (row.customer?.name || '').toLowerCase().includes(recordsSearch.toLowerCase())
+                                        )
+                                        .map((row, i) => (
+                                            <tr key={`ub-${i}`} className="border-t border-gray-200">
+                                                <td className="px-3 py-2">{row.customer?.name ?? 'Unknown'}</td>
+                                                <td className="px-3 py-2">{money(row.outstanding)}</td>
+                                            </tr>
+                                        ))
+                                    }
+                                    {unpaidBalances.filter((row) =>
+                                        !recordsSearch || (row.customer?.name || '').toLowerCase().includes(recordsSearch.toLowerCase())
+                                    ).length === 0 && (
+                                        <tr><td colSpan={2} className="px-3 py-4 text-center text-gray-500">No data</td></tr>
+                                    )}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
-                    <div className="overflow-x-auto">
-                        <table className="w-full border-collapse text-sm">
-                            <thead>
-                                <tr className="bg-gray-100 text-left text-gray-700">
-                                    <th className="px-3 py-2">Customer</th>
-                                    <th className="px-3 py-2">Container</th>
-                                    <th className="px-3 py-2">Outstanding</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {borrowedContainers
-                                    .filter((row) =>
+                    <div>
+                        <h4 className="mb-2 flex items-center gap-2 text-base font-semibold text-gray-900">
+                            <FiBox /> Borrowed Containers
+                        </h4>
+                        <div className="mb-2">
+                            <div className="relative">
+                                <FiSearch className="absolute left-3 top-2.5 text-gray-400" size={14} />
+                                <input
+                                    type="text"
+                                    placeholder="Search customer..."
+                                    value={containerSearch}
+                                    onChange={(e) => setContainerSearch(e.target.value)}
+                                    className="w-full rounded-md border border-gray-300 pl-8 pr-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                                />
+                            </div>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full border-collapse text-sm">
+                                <thead>
+                                    <tr className="bg-gray-100 text-left text-gray-700">
+                                        <th className="px-3 py-2">Customer</th>
+                                        <th className="px-3 py-2">Container</th>
+                                        <th className="px-3 py-2">Outstanding</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {borrowedContainers
+                                        .filter((row) =>
+                                            !containerSearch || (row.customer?.name || '').toLowerCase().includes(containerSearch.toLowerCase())
+                                        )
+                                        .map((row, i) => (
+                                            <tr key={`bc-${i}`} className="border-t border-gray-200">
+                                                <td className="px-3 py-2">{row.customer?.name ?? 'Unknown'}</td>
+                                                <td className="px-3 py-2">{row.container_type}</td>
+                                                <td className="px-3 py-2">{row.outstanding}</td>
+                                            </tr>
+                                        ))
+                                    }
+                                    {borrowedContainers.filter((row) =>
                                         !containerSearch || (row.customer?.name || '').toLowerCase().includes(containerSearch.toLowerCase())
-                                    )
-                                    .map((row, i) => (
-                                        <tr key={`bc-${i}`} className="border-t border-gray-200">
-                                            <td className="px-3 py-2">{row.customer?.name ?? 'Unknown'}</td>
-                                            <td className="px-3 py-2">{row.container_type}</td>
-                                            <td className="px-3 py-2">{row.outstanding}</td>
-                                        </tr>
-                                    ))
-                                }
-                                {borrowedContainers.filter((row) =>
-                                    !containerSearch || (row.customer?.name || '').toLowerCase().includes(containerSearch.toLowerCase())
-                                ).length === 0 && (
-                                    <tr><td colSpan={3} className="px-3 py-4 text-center text-gray-500">No data</td></tr>
-                                )}
-                            </tbody>
-                        </table>
+                                    ).length === 0 && (
+                                        <tr><td colSpan={3} className="px-3 py-4 text-center text-gray-500">No data</td></tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
