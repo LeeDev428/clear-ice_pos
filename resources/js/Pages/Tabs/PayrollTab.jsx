@@ -1,5 +1,5 @@
 import { FiUsers, FiRefreshCw, FiPlus, FiEdit2, FiX, FiPrinter } from 'react-icons/fi';
-import { Input, Select, DataTable, money } from '@/Components/PosUI';
+import { Input, Select, DataTable, money, fmtDateTime } from '@/Components/PosUI';
 
 export default function PayrollTab({
     payrollSubTab,
@@ -212,7 +212,7 @@ export default function PayrollTab({
                                 ) : (
                                     (cashAdvances || []).map((ca) => (
                                         <tr key={ca.id} className="border-t border-gray-200">
-                                            <td className="px-3 py-2">{(ca.advance_date || '').slice(0, 10)}</td>
+                                            <td className="px-3 py-2">{fmtDateTime(ca.created_at)}</td>
                                             <td className="px-3 py-2">{ca.employee?.name ?? '-'}</td>
                                             <td className="px-3 py-2">{money(ca.amount)}</td>
                                             <td className="px-3 py-2">{money(ca.balance)}</td>
