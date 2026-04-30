@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CashAdvanceController;
+use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\CollectionPaymentController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\ExpenseController;
@@ -56,6 +57,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Cash Advances
     Route::post('/cash-advances', [CashAdvanceController::class, 'store'])->name('cash-advances.store');
+
+    // Customers (CRUD)
+    Route::post('/customers', [CustomerController::class, 'store'])->name('customers.store');
+    Route::patch('/customers/{customer}', [CustomerController::class, 'update'])->name('customers.update');
+    Route::delete('/customers/{customer}', [CustomerController::class, 'destroy'])->name('customers.destroy');
 
     // Records
     Route::post('/records/container-return', [RecordController::class, 'returnContainer'])->name('records.container-return');
