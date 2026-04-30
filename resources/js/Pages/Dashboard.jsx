@@ -1,8 +1,8 @@
 ﻿import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { FiPrinter } from 'react-icons/fi';
-import { Input, Select, money, fmtDate } from '@/Components/PosUI';
+import { Input, Select, Toast, money, fmtDate } from '@/Components/PosUI';
 import SalesTab from './Tabs/SalesTab';
 import InventoryTab from './Tabs/InventoryTab';
 import ExpensesTab from './Tabs/ExpensesTab';
@@ -83,6 +83,8 @@ export default function Dashboard({
     const [balancesTo, setBalancesTo] = useState(balancesToProp || '');
     const [showUserModal, setShowUserModal] = useState(false);
     const [editUserTarget, setEditUserTarget] = useState(null);
+    const [toast, setToast] = useState(null);
+    const showToast = useCallback((message, type = 'success') => setToast({ message, type }), []);
     const [showCustomerModal, setShowCustomerModal] = useState(false);
     const [editCustomerTarget, setEditCustomerTarget] = useState(null);
     const [actualCashRemitted, setActualCashRemitted] = useState('');
@@ -347,6 +349,7 @@ export default function Dashboard({
                 salesForm.setData('items', [
                     { product_id: '', quantity: 1, container_borrowed_qty: 0, discount: 0, container_type: '' },
                 ]);
+                showToast('Sale recorded successfully');
             },
         });
     };
@@ -356,7 +359,7 @@ export default function Dashboard({
         expenseForm.transform((data) => ({ ...data, amount: Number(data.amount || 0) }));
         expenseForm.post(route('expenses.store'), {
             preserveScroll: true,
-            onSuccess: () => expenseForm.reset('description', 'amount'),
+            onSuccess: () => { expenseForm.reset('description', 'amount'); showToast('Expense saved'); },
         });
     };
 
@@ -368,7 +371,7 @@ export default function Dashboard({
             harvested_today: Number(data.harvested_today || 0),
             actual_ending_count: Number(data.actual_ending_count || 0),
         }));
-        inventoryForm.post(route('inventory-counts.store'), { preserveScroll: true });
+        inventoryForm.post(route('inventory-counts.store'), { preserveScroll: true, onSuccess: () => showToast('Inventory count saved') });
     };
 
     const submitCollection = (event) => {
@@ -380,7 +383,7 @@ export default function Dashboard({
         }));
         collectionForm.post(route('collections.store'), {
             preserveScroll: true,
-            onSuccess: () => collectionForm.reset('amount', 'notes'),
+            onSuccess: () => { collectionForm.reset('amount', 'notes'); showToast('Collection recorded'); },
         });
     };
 
@@ -389,7 +392,7 @@ export default function Dashboard({
         waterRestockForm.transform((data) => ({ ...data, quantity: Number(data.quantity || 0) }));
         waterRestockForm.post(route('water-restocks.store'), {
             preserveScroll: true,
-            onSuccess: () => waterRestockForm.reset('quantity', 'notes'),
+            onSuccess: () => { waterRestockForm.reset('quantity', 'notes'); showToast('Water restock saved'); },
         });
     };
 
@@ -402,7 +405,7 @@ export default function Dashboard({
         }));
         containerReturnForm.post(route('records.container-return'), {
             preserveScroll: true,
-            onSuccess: () => containerReturnForm.reset('quantity', 'notes'),
+            onSuccess: () => { containerReturnForm.reset('quantity', 'notes'); showToast('Container return recorded'); },
         });
     };
 
@@ -419,7 +422,7 @@ export default function Dashboard({
         }));
         payrollForm.post(route('payroll.store'), {
             preserveScroll: true,
-            onSuccess: () => payrollForm.reset('amount', 'notes', 'actual_in', 'actual_out'),
+            onSuccess: () => { payrollForm.reset('amount', 'notes', 'actual_in', 'actual_out'); showToast('Time log added'); },
         });
     };
 
@@ -463,23 +466,23 @@ export default function Dashboard({
         if (editCustomerTarget) {
             customerForm.patch(route('customers.update', editCustomerTarget.id), {
                 preserveScroll: true,
-                onSuccess: () => setShowCustomerModal(false),
+                onSuccess: () => { setShowCustomerModal(false); showToast('Customer updated'); },
             });
         } else {
             customerForm.post(route('customers.store'), {
                 preserveScroll: true,
-                onSuccess: () => { setShowCustomerModal(false); customerForm.reset(); },
+                onSuccess: () => { setShowCustomerModal(false); customerForm.reset(); showToast('Customer added'); },
             });
         }
     };
 
     const deactivateCustomer = (customer) => {
         if (!confirm(`Deactivate customer: ${customer.name}?`)) return;
-        router.delete(route('customers.destroy', customer.id), { preserveScroll: true });
+        router.delete(route('customers.destroy', customer.id), { preserveScroll: true, onSuccess: () => showToast('Customer deactivated') });
     };
 
     const reactivateCustomer = (customer) => {
-        router.patch(route('customers.update', customer.id), { ...customer, is_active: true }, { preserveScroll: true });
+        router.patch(route('customers.update', customer.id), { ...customer, is_active: true }, { preserveScroll: true, onSuccess: () => showToast('Customer reactivated') });
     };
 
     const loadBalances = () => {
@@ -500,23 +503,23 @@ export default function Dashboard({
         if (editUserTarget) {
             userMgmtForm.patch(route('users.update', editUserTarget.id), {
                 preserveScroll: true,
-                onSuccess: () => { setShowUserModal(false); userMgmtForm.reset(); setEditUserTarget(null); },
+                onSuccess: () => { setShowUserModal(false); userMgmtForm.reset(); setEditUserTarget(null); showToast('User updated'); },
             });
         } else {
             userMgmtForm.post(route('users.store'), {
                 preserveScroll: true,
-                onSuccess: () => { setShowUserModal(false); userMgmtForm.reset(); },
+                onSuccess: () => { setShowUserModal(false); userMgmtForm.reset(); showToast('User created'); },
             });
         }
     };
 
     const deactivateUser = (user) => {
         if (!confirm(`Deactivate user: ${user.name}?`)) return;
-        router.delete(route('users.destroy', user.id), { preserveScroll: true });
+        router.delete(route('users.destroy', user.id), { preserveScroll: true, onSuccess: () => showToast('User deactivated') });
     };
 
     const reactivateUser = (user) => {
-        router.patch(route('users.update', user.id), { name: user.name, email: user.email, is_active: true }, { preserveScroll: true });
+        router.patch(route('users.update', user.id), { name: user.name, email: user.email, is_active: true }, { preserveScroll: true, onSuccess: () => showToast('User reactivated') });
     };
 
     const openVoidModal = (sale) => {
@@ -536,6 +539,7 @@ export default function Dashboard({
                     setShowVoidModal(false);
                     setVoidTarget(null);
                     setVoidReason('');
+                    showToast('Sale voided');
                 },
             },
         );
@@ -559,7 +563,7 @@ export default function Dashboard({
         event.preventDefault();
         editSaleForm.patch(route('sales.update', editSaleTarget.id), {
             preserveScroll: true,
-            onSuccess: () => setShowEditSaleModal(false),
+            onSuccess: () => { setShowEditSaleModal(false); showToast('Sale updated'); },
         });
     };
 
@@ -578,13 +582,13 @@ export default function Dashboard({
         event.preventDefault();
         editExpenseForm.patch(route('expenses.update', editExpenseTarget.id), {
             preserveScroll: true,
-            onSuccess: () => setShowEditExpenseModal(false),
+            onSuccess: () => { setShowEditExpenseModal(false); showToast('Expense updated'); },
         });
     };
 
     const deleteExpense = (expense) => {
         if (!confirm(`Delete expense: ${expense.description} (${money(expense.amount)})?`)) return;
-        router.delete(route('expenses.destroy', expense.id), { preserveScroll: true });
+        router.delete(route('expenses.destroy', expense.id), { preserveScroll: true, onSuccess: () => showToast('Expense deleted') });
     };
 
     const addToCart = () => {
@@ -640,12 +644,12 @@ export default function Dashboard({
         if (editProductTarget) {
             productForm.patch(route('products.update', editProductTarget.id), {
                 preserveScroll: true,
-                onSuccess: () => setShowProductModal(false),
+                onSuccess: () => { setShowProductModal(false); showToast('Product updated'); },
             });
         } else {
             productForm.post(route('products.store'), {
                 preserveScroll: true,
-                onSuccess: () => setShowProductModal(false),
+                onSuccess: () => { setShowProductModal(false); showToast('Product added'); },
             });
         }
     };
@@ -677,26 +681,26 @@ export default function Dashboard({
         if (editEmployeeTarget) {
             employeeForm.patch(route('employees.update', editEmployeeTarget.id), {
                 preserveScroll: true,
-                onSuccess: () => setShowEmployeeModal(false),
+                onSuccess: () => { setShowEmployeeModal(false); showToast('Employee updated'); },
             });
         } else {
             employeeForm.post(route('employees.store'), {
                 preserveScroll: true,
-                onSuccess: () => setShowEmployeeModal(false),
+                onSuccess: () => { setShowEmployeeModal(false); showToast('Employee added'); },
             });
         }
     };
 
     const deactivateEmployee = (emp) => {
         if (!confirm(`Deactivate ${emp.name}?`)) return;
-        router.delete(route('employees.destroy', emp.id), { preserveScroll: true });
+        router.delete(route('employees.destroy', emp.id), { preserveScroll: true, onSuccess: () => showToast('Employee deactivated') });
     };
 
     const submitCashAdvance = (event) => {
         event.preventDefault();
         cashAdvanceForm.post(route('cash-advances.store'), {
             preserveScroll: true,
-            onSuccess: () => cashAdvanceForm.reset('amount', 'notes'),
+            onSuccess: () => { cashAdvanceForm.reset('amount', 'notes'); showToast('Cash advance recorded'); },
         });
     };
 
@@ -709,7 +713,7 @@ export default function Dashboard({
             end_date: periodEnd,
             net_pay: payrollPreview.netPay,
             ca_deducted: caDeducted,
-        }, { preserveScroll: true });
+        }, { preserveScroll: true, onSuccess: () => showToast('Payroll finalized') });
     };
 
     const loadPeriodLogs = () => {
@@ -725,23 +729,12 @@ export default function Dashboard({
     };
 
     return (
-        <AuthenticatedLayout
-            header={<h2 className="text-xl font-semibold text-gray-900">Clear Ice POS</h2>}
-        >
+        <AuthenticatedLayout>
             <Head title="Dashboard" />
 
+            {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+
             <div className="mx-auto w-full max-w-6xl px-4 py-4 sm:px-6 lg:px-8">
-                {(flash?.success || flash?.error) && (
-                    <div
-                        className={`mb-4 rounded-md border px-4 py-3 text-sm ${
-                            flash?.success
-                                ? 'border-green-300 bg-green-50 text-green-800'
-                                : 'border-red-300 bg-red-50 text-red-800'
-                        }`}
-                    >
-                        {flash?.success || flash?.error}
-                    </div>
-                )}
 
                 <div className="mb-4 overflow-x-auto rounded-md border border-gray-200 bg-white p-2">
                     <div className="flex min-w-max gap-2">
