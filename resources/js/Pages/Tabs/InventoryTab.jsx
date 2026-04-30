@@ -85,38 +85,40 @@ export default function InventoryTab({
                         </div>
                     </form>
 
-                    <table className="mt-4 w-full table-auto border-collapse text-sm">
-                        <thead>
-                            <tr className="bg-gray-100 text-left text-gray-700">
-                                <th className="px-3 py-2">Ice Size</th>
-                                <th className="px-3 py-2">Harvested</th>
-                                <th className="px-3 py-2">Sold</th>
-                                <th className="px-3 py-2">Expected</th>
-                                <th className="px-3 py-2">Actual</th>
-                                <th className="px-3 py-2">Variance</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {inventoryToday.map((row) => (
-                                <tr key={row.id} className="border-t border-gray-200">
-                                    <td className="px-3 py-2">{row.ice_size}</td>
-                                    <td className="px-3 py-2">{row.harvested_today}</td>
-                                    <td className="px-3 py-2">{row.sold_today}</td>
-                                    <td className="px-3 py-2">{row.expected_count}</td>
-                                    <td className="px-3 py-2">{row.actual_ending_count}</td>
-                                    <td
-                                        className={`px-3 py-2 ${
-                                            Number(row.variance) > 0
-                                                ? 'text-red-700'
-                                                : 'text-green-700'
-                                        }`}
-                                    >
-                                        {row.variance}
-                                    </td>
+                    <div className="mt-4 overflow-x-auto">
+                        <table className="w-full table-auto border-collapse text-sm">
+                            <thead>
+                                <tr className="bg-gray-100 text-left text-gray-700">
+                                    <th className="whitespace-nowrap px-3 py-2">Ice Size</th>
+                                    <th className="whitespace-nowrap px-3 py-2">Harvested</th>
+                                    <th className="whitespace-nowrap px-3 py-2">Sold</th>
+                                    <th className="whitespace-nowrap px-3 py-2">Expected</th>
+                                    <th className="whitespace-nowrap px-3 py-2">Actual</th>
+                                    <th className="whitespace-nowrap px-3 py-2">Variance</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {inventoryToday.map((row) => (
+                                    <tr key={row.id} className="border-t border-gray-200">
+                                        <td className="whitespace-nowrap px-3 py-2">{row.ice_size}</td>
+                                        <td className="whitespace-nowrap px-3 py-2">{row.harvested_today}</td>
+                                        <td className="whitespace-nowrap px-3 py-2">{row.sold_today}</td>
+                                        <td className="whitespace-nowrap px-3 py-2">{row.expected_count}</td>
+                                        <td className="whitespace-nowrap px-3 py-2">{row.actual_ending_count}</td>
+                                        <td
+                                            className={`whitespace-nowrap px-3 py-2 ${
+                                                Number(row.variance) > 0
+                                                    ? 'text-red-700'
+                                                    : 'text-green-700'
+                                            }`}
+                                        >
+                                            {row.variance}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </>
             ) : (
                 <>
