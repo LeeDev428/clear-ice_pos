@@ -2,7 +2,7 @@
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { useCallback, useMemo, useState } from 'react';
 import { FiPrinter } from 'react-icons/fi';
-import { Input, Select, Toast, money, fmtDate } from '@/Components/PosUI';
+import { Input, Select, Toast, ConfirmDialog, money, fmtDate } from '@/Components/PosUI';
 import SalesTab from './Tabs/SalesTab';
 import InventoryTab from './Tabs/InventoryTab';
 import ExpensesTab from './Tabs/ExpensesTab';
@@ -13,6 +13,7 @@ import ZReadTab from './Tabs/ZReadTab';
 import PayrollTab from './Tabs/PayrollTab';
 import CustomerTab from './Tabs/CustomerTab';
 import UserManagementTab from './Tabs/UserManagementTab';
+import ProfileTab from './Tabs/ProfileTab';
 
 const TABS = [
     'Sales',
@@ -25,10 +26,13 @@ const TABS = [
     'Payroll',
     'Customers',
     'User Management',
+    'Profile',
 ];
 
 export default function Dashboard({
     today,
+    mustVerifyEmail,
+    status,
     historyFrom: historyFromProp,
     historyTo: historyToProp,
     payrollFrom: payrollFromProp,
@@ -68,7 +72,17 @@ export default function Dashboard({
     periodEnd: periodEndProp,
 }) {
     const { flash } = usePage().props;
-    const [activeTab, setActiveTab] = useState('Sales');
+    const [activeTab, setActiveTab] = useState(() => {
+        if (typeof window !== 'undefined') {
+            const tab = new URLSearchParams(window.location.search).get('tab');
+            if (tab && TABS.includes(tab)) return tab;
+        }
+        return 'Sales';
+    });
+    const [confirmDialog, setConfirmDialog] = useState(null);
+    const showConfirm = useCallback((title, message, onConfirm, confirmLabel = 'Confirm', variant = 'danger') => {
+        setConfirmDialog({ title, message, onConfirm, confirmLabel, variant });
+    }, []);
     const [historyFrom, setHistoryFrom] = useState(historyFromProp || today);
     const [historyTo, setHistoryTo] = useState(historyToProp || today);
     const [payrollFrom, setPayrollFrom] = useState(payrollFromProp || today);
@@ -477,8 +491,12 @@ export default function Dashboard({
     };
 
     const deactivateCustomer = (customer) => {
-        if (!confirm(`Deactivate customer: ${customer.name}?`)) return;
-        router.delete(route('customers.destroy', customer.id), { preserveScroll: true, onSuccess: () => showToast('Customer deactivated') });
+        showConfirm(
+            'Deactivate Customer',
+            `Are you sure you want to deactivate "${customer.name}"? They will no longer appear in active customer lists.`,
+            () => { setConfirmDialog(null); router.delete(route('customers.destroy', customer.id), { preserveScroll: true, onSuccess: () => showToast('Customer deactivated') }); },
+            'Deactivate'
+        );
     };
 
     const reactivateCustomer = (customer) => {
@@ -514,8 +532,12 @@ export default function Dashboard({
     };
 
     const deactivateUser = (user) => {
-        if (!confirm(`Deactivate user: ${user.name}?`)) return;
-        router.delete(route('users.destroy', user.id), { preserveScroll: true, onSuccess: () => showToast('User deactivated') });
+        showConfirm(
+            'Deactivate User',
+            `Are you sure you want to deactivate "${user.name}"? They will no longer be able to log in.`,
+            () => { setConfirmDialog(null); router.delete(route('users.destroy', user.id), { preserveScroll: true, onSuccess: () => showToast('User deactivated') }); },
+            'Deactivate'
+        );
     };
 
     const reactivateUser = (user) => {
@@ -587,8 +609,12 @@ export default function Dashboard({
     };
 
     const deleteExpense = (expense) => {
-        if (!confirm(`Delete expense: ${expense.description} (${money(expense.amount)})?`)) return;
-        router.delete(route('expenses.destroy', expense.id), { preserveScroll: true, onSuccess: () => showToast('Expense deleted') });
+        showConfirm(
+            'Delete Expense',
+            `Are you sure you want to permanently delete "${expense.description}" (${money(expense.amount)})? This action cannot be undone.`,
+            () => { setConfirmDialog(null); router.delete(route('expenses.destroy', expense.id), { preserveScroll: true, onSuccess: () => showToast('Expense deleted') }); },
+            'Delete'
+        );
     };
 
     const addToCart = () => {
@@ -692,8 +718,12 @@ export default function Dashboard({
     };
 
     const deactivateEmployee = (emp) => {
-        if (!confirm(`Deactivate ${emp.name}?`)) return;
-        router.delete(route('employees.destroy', emp.id), { preserveScroll: true, onSuccess: () => showToast('Employee deactivated') });
+        showConfirm(
+            'Deactivate Employee',
+            `Are you sure you want to deactivate "${emp.name}"? Their payroll records will be preserved.`,
+            () => { setConfirmDialog(null); router.delete(route('employees.destroy', emp.id), { preserveScroll: true, onSuccess: () => showToast('Employee deactivated') }); },
+            'Deactivate'
+        );
     };
 
     const submitCashAdvance = (event) => {
@@ -733,6 +763,16 @@ export default function Dashboard({
             <Head title="Dashboard" />
 
             {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+            {confirmDialog && (
+                <ConfirmDialog
+                    title={confirmDialog.title}
+                    message={confirmDialog.message}
+                    confirmLabel={confirmDialog.confirmLabel}
+                    variant={confirmDialog.variant}
+                    onConfirm={confirmDialog.onConfirm}
+                    onCancel={() => setConfirmDialog(null)}
+                />
+            )}
 
             <div className="mx-auto w-full max-w-6xl px-4 py-4 sm:px-6 lg:px-8">
 
@@ -942,6 +982,10 @@ export default function Dashboard({
                         editUserTarget={editUserTarget}
                         setEditUserTarget={setEditUserTarget}
                     />
+                )}
+
+                {activeTab === 'Profile' && (
+                    <ProfileTab mustVerifyEmail={mustVerifyEmail} status={status} />
                 )}
             </div>
 
