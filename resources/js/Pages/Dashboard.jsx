@@ -2,7 +2,7 @@
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 import { FiPrinter } from 'react-icons/fi';
-import { Input, Select, money } from '@/Components/PosUI';
+import { Input, Select, money, fmtDate } from '@/Components/PosUI';
 import SalesTab from './Tabs/SalesTab';
 import InventoryTab from './Tabs/InventoryTab';
 import ExpensesTab from './Tabs/ExpensesTab';
@@ -12,6 +12,7 @@ import DashboardTab from './Tabs/DashboardTab';
 import ZReadTab from './Tabs/ZReadTab';
 import PayrollTab from './Tabs/PayrollTab';
 import CustomerTab from './Tabs/CustomerTab';
+import UserManagementTab from './Tabs/UserManagementTab';
 
 const TABS = [
     'Sales',
@@ -23,6 +24,7 @@ const TABS = [
     'Z-Read',
     'Payroll',
     'Customers',
+    'User Management',
 ];
 
 export default function Dashboard({
@@ -37,10 +39,13 @@ export default function Dashboard({
     expensesTo: expensesToProp,
     recordsFrom: recordsFromProp,
     recordsTo: recordsToProp,
+    balancesFrom: balancesFromProp,
+    balancesTo: balancesToProp,
     products,
     customers,
     allCustomers,
     employees,
+    users,
     recentSales,
     unpaidBalances,
     borrowedContainers,
@@ -74,6 +79,10 @@ export default function Dashboard({
     const [expensesTo, setExpensesTo] = useState(expensesToProp || today);
     const [recordsFrom, setRecordsFrom] = useState(recordsFromProp || today);
     const [recordsTo, setRecordsTo] = useState(recordsToProp || today);
+    const [balancesFrom, setBalancesFrom] = useState(balancesFromProp || '');
+    const [balancesTo, setBalancesTo] = useState(balancesToProp || '');
+    const [showUserModal, setShowUserModal] = useState(false);
+    const [editUserTarget, setEditUserTarget] = useState(null);
     const [showCustomerModal, setShowCustomerModal] = useState(false);
     const [editCustomerTarget, setEditCustomerTarget] = useState(null);
     const [actualCashRemitted, setActualCashRemitted] = useState('');
@@ -214,6 +223,13 @@ export default function Dashboard({
         phone: '',
         address: '',
         is_walk_in: false,
+    });
+
+    const userMgmtForm = useForm({
+        name: '',
+        email: '',
+        password: '',
+        password_confirmation: '',
     });
 
     const editSaleForm = useForm({
@@ -464,6 +480,43 @@ export default function Dashboard({
 
     const reactivateCustomer = (customer) => {
         router.patch(route('customers.update', customer.id), { ...customer, is_active: true }, { preserveScroll: true });
+    };
+
+    const loadBalances = () => {
+        router.reload({
+            only: ['unpaidBalances', 'borrowedContainers', 'balancesFrom', 'balancesTo'],
+            data: { balances_from: balancesFrom, balances_to: balancesTo },
+        });
+    };
+
+    const openEditUser = (user) => {
+        setEditUserTarget(user);
+        userMgmtForm.setData({ name: user.name, email: user.email, password: '', password_confirmation: '' });
+        setShowUserModal(true);
+    };
+
+    const submitUser = (event) => {
+        event.preventDefault();
+        if (editUserTarget) {
+            userMgmtForm.patch(route('users.update', editUserTarget.id), {
+                preserveScroll: true,
+                onSuccess: () => { setShowUserModal(false); userMgmtForm.reset(); setEditUserTarget(null); },
+            });
+        } else {
+            userMgmtForm.post(route('users.store'), {
+                preserveScroll: true,
+                onSuccess: () => { setShowUserModal(false); userMgmtForm.reset(); },
+            });
+        }
+    };
+
+    const deactivateUser = (user) => {
+        if (!confirm(`Deactivate user: ${user.name}?`)) return;
+        router.delete(route('users.destroy', user.id), { preserveScroll: true });
+    };
+
+    const reactivateUser = (user) => {
+        router.patch(route('users.update', user.id), { name: user.name, email: user.email, is_active: true }, { preserveScroll: true });
     };
 
     const openVoidModal = (sale) => {
@@ -768,6 +821,11 @@ export default function Dashboard({
                         customers={customers}
                         unpaidBalances={unpaidBalances}
                         borrowedContainers={borrowedContainers}
+                        balancesFrom={balancesFrom}
+                        setBalancesFrom={setBalancesFrom}
+                        balancesTo={balancesTo}
+                        setBalancesTo={setBalancesTo}
+                        loadBalances={loadBalances}
                         recordsSearch={recordsSearch}
                         setRecordsSearch={setRecordsSearch}
                         containerSearch={containerSearch}
@@ -877,6 +935,21 @@ export default function Dashboard({
                         setEditCustomerTarget={setEditCustomerTarget}
                     />
                 )}
+
+                {activeTab === 'User Management' && (
+                    <UserManagementTab
+                        users={users}
+                        userMgmtForm={userMgmtForm}
+                        submitUser={submitUser}
+                        openEditUser={openEditUser}
+                        deactivateUser={deactivateUser}
+                        reactivateUser={reactivateUser}
+                        showUserModal={showUserModal}
+                        setShowUserModal={setShowUserModal}
+                        editUserTarget={editUserTarget}
+                        setEditUserTarget={setEditUserTarget}
+                    />
+                )}
             </div>
 
             {/* Void Modal */}
@@ -955,8 +1028,8 @@ export default function Dashboard({
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
                     <div className="w-full max-w-sm rounded-md border border-gray-200 bg-white p-6 shadow-lg print:shadow-none" id="receipt">
                         <div className="text-center mb-4">
-                            <h2 className="text-lg font-bold">Clear Ice</h2>
-                            <p className="text-xs text-gray-500">Sales Receipt</p>
+                            <h2 className="text-lg font-bold">CLEAR ICE INC.</h2>
+                            <p className="text-xs text-gray-500">Recto St. Brgy. Quipot, Tiaong, Quezon</p>
                             <p className="text-xs text-gray-500">{lastSaleData.date}</p>
                         </div>
                         <div className="text-sm mb-2"><span className="text-gray-600">Customer: </span><span className="font-medium">{lastSaleData.customer}</span></div>
@@ -1044,10 +1117,9 @@ export default function Dashboard({
                     <div className="w-full max-w-sm rounded-md border border-gray-200 bg-white p-6 shadow-lg print:shadow-none" id="view-receipt">
                         <div className="mb-3 text-center">
                             <div className="text-lg font-bold tracking-wide">CLEAR ICE INC.</div>
-                            <div className="text-xs text-gray-500">Underground Technologies Inc.</div>
-                            <div className="text-xs text-gray-500">Tiaong, Quezon</div>
+                            <div className="text-xs text-gray-500">Recto St. Brgy. Quipot, Tiaong, Quezon</div>
                             <div className="mt-1 border-t border-dashed border-gray-300 pt-1 text-xs text-gray-500">
-                                Date: {viewReceiptSale.sale_date} &nbsp;&nbsp; TRX ID: TRX-{String(viewReceiptSale.id).padStart(6, '0')}
+                                Date: {fmtDate(viewReceiptSale.sale_date)} &nbsp;&nbsp; TRX ID: TRX-{String(viewReceiptSale.id).padStart(6, '0')}
                             </div>
                         </div>
                         <div className="mb-1 text-sm"><span className="text-gray-500">Customer: </span><span className="font-medium">{viewReceiptSale.customer?.name ?? 'Walk-in'}</span></div>
