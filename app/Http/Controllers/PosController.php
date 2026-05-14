@@ -8,6 +8,7 @@ use App\Models\ContainerMovement;
 use App\Models\Customer;
 use App\Models\Employee;
 use App\Models\Expense;
+use App\Models\ExpenseCategory;
 use App\Models\InventoryCount;
 use App\Models\PayrollEntry;
 use App\Models\Product;
@@ -259,6 +260,7 @@ class PosController extends Controller
             'expensesToday' => $expensesToday,
             'expensesFrom' => $expensesFrom,
             'expensesTo' => $expensesTo,
+            'expenseCategories' => ExpenseCategory::orderBy('name')->get(['id', 'name']),
             'collectionsOnDate' => $collectionsOnDate,
             'containerReturnsOnDate' => $containerReturnsOnDate,
             'recordsFrom' => $recordsFrom,
