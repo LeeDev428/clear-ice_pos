@@ -1,4 +1,4 @@
-import { FiSettings } from 'react-icons/fi';
+import { FiSettings, FiEdit2 } from 'react-icons/fi';
 import { Input, Select, money } from '@/Components/PosUI';
 
 export default function SalesTab({
@@ -19,6 +19,7 @@ export default function SalesTab({
     updateSaleItem,
     submitSale,
     openAddProduct,
+    openEditProduct,
 }) {
     return (
         <section className="space-y-4">
@@ -63,19 +64,26 @@ export default function SalesTab({
                 <h4 className="mb-2 text-sm font-semibold text-gray-700">Select Product</h4>
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                     {products.filter((p) => p.is_active !== false).map((product) => (
-                        <button
+                        <div
                             key={product.id}
-                            type="button"
-                            onClick={() => setSelectedProduct(product)}
-                            className={`rounded-md border px-3 py-3 text-left text-sm transition ${
+                            className={`group relative rounded-md border px-3 py-3 text-left text-sm transition cursor-pointer ${
                                 selectedProduct?.id === product.id
                                     ? 'border-blue-500 bg-blue-50 font-semibold text-blue-700'
                                     : 'border-gray-200 bg-gray-50 text-gray-800 hover:bg-blue-50 hover:border-blue-400'
                             }`}
+                            onClick={() => setSelectedProduct(product)}
                         >
                             <div className="font-medium leading-tight">{product.name}</div>
                             <div className="mt-1 text-xs text-gray-500">{money(product.price)}</div>
-                        </button>
+                            <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); openEditProduct(product); }}
+                                className="absolute right-1 top-1 hidden rounded p-1 text-gray-400 hover:text-blue-600 group-hover:flex items-center"
+                                title="Edit product"
+                            >
+                                <FiEdit2 size={12} />
+                            </button>
+                        </div>
                     ))}
                 </div>
                 {selectedProduct && (
