@@ -37,6 +37,12 @@ export default function DashboardTab({
                 <SummaryCard icon={<FiCreditCard />} title="Outstanding Debt" value={money(outstandingDebt)} />
                 <SummaryCard icon={<FiTrendingUp />} title="Net" value={money(Number(dashboardTotals.sales || 0) - Number(dashboardTotals.expenses || 0))} />
             </div>
+            {/* Sales breakdown by product category */}
+            <div className="grid grid-cols-3 gap-3">
+                <SummaryCard icon={<FiDollarSign />} title="Ice Sales" value={money(dashboardTotals.ice_sales ?? 0)} />
+                <SummaryCard icon={<FiDollarSign />} title="Water Sales" value={money(dashboardTotals.water_sales ?? 0)} />
+                <SummaryCard icon={<FiDollarSign />} title="Others Sales" value={money(dashboardTotals.others_sales ?? 0)} />
+            </div>
             <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
                 <SummaryCard icon={<FiDollarSign />} title="Cash Sales" value={money(dashboardTotals.cash_sales)} />
                 <SummaryCard icon={<FiCreditCard />} title="GCash Sales" value={money(dashboardTotals.gcash_sales)} />
