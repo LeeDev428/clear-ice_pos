@@ -224,5 +224,6 @@ export default function ExpensesTab({
                 </div>
             </div>
         </section>
+        </>
     );
 }
