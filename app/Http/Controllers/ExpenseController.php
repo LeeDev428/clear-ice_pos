@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Expense;
+use App\Models\ExpenseCategory;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -13,7 +14,7 @@ class ExpenseController extends Controller
     {
         $validated = $request->validate([
             'expense_date' => ['required', 'date'],
-            'category' => ['required', Rule::in(['Auto Repair', 'Fuel', 'Utilities', 'Maintenance', 'Supplies', 'Others'])],
+            'category' => ['required', Rule::in(ExpenseCategory::pluck('name')->toArray())],
             'description' => ['required', 'string', 'max:255'],
             'amount' => ['required', 'numeric', 'gt:0'],
             'payment_source' => ['required', Rule::in(['cash', 'gcash'])],
@@ -41,7 +42,7 @@ class ExpenseController extends Controller
         }
 
         $validated = $request->validate([
-            'category' => ['required', Rule::in(['Auto Repair', 'Fuel', 'Utilities', 'Maintenance', 'Supplies', 'Others'])],
+            'category' => ['required', Rule::in(ExpenseCategory::pluck('name')->toArray())],
             'description' => ['required', 'string', 'max:255'],
             'amount' => ['required', 'numeric', 'gt:0'],
             'payment_source' => ['required', Rule::in(['cash', 'gcash'])],
