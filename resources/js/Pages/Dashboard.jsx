@@ -70,6 +70,7 @@ export default function Dashboard({
     periodEmployee: periodEmployeeProp,
     periodStart: periodStartProp,
     periodEnd: periodEndProp,
+    expenseCategories,
 }) {
     const { flash } = usePage().props;
     const [activeTab, setActiveTab] = useState(() => {
@@ -814,6 +815,7 @@ export default function Dashboard({
                         updateSaleItem={updateSaleItem}
                         submitSale={submitSale}
                         openAddProduct={openAddProduct}
+                        openEditProduct={openEditProduct}
                     />
                 )}
 
@@ -842,6 +844,7 @@ export default function Dashboard({
                         loadExpenses={loadExpenses}
                         openEditExpenseModal={openEditExpenseModal}
                         deleteExpense={deleteExpense}
+                        expenseCategories={expenseCategories}
                     />
                 )}
 
