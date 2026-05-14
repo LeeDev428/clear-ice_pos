@@ -42,6 +42,13 @@ export default function ZReadTab({
                 </button>
             </div>
 
+            {/* Sales by product category */}
+            <div className="mb-3 grid grid-cols-3 gap-3">
+                <SummaryCard icon={<FiList />} title="Ice Sales" value={money(zreadTotals.ice_sales ?? 0)} />
+                <SummaryCard icon={<FiList />} title="Water Sales" value={money(zreadTotals.water_sales ?? 0)} />
+                <SummaryCard icon={<FiList />} title="Others Sales" value={money(zreadTotals.others_sales ?? 0)} />
+            </div>
+
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                 <SummaryCard icon={<FiDollarSign />} title="Cash Sales" value={money(zreadTotals.cash_sales)} />
                 <SummaryCard icon={<FiCreditCard />} title="GCash Sales" value={money(zreadTotals.gcash_sales)} />
