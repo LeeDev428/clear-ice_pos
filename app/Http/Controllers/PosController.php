@@ -17,6 +17,7 @@ use App\Models\User;
 use App\Models\WaterRestock;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -97,6 +98,24 @@ class PosController extends Controller
         ];
         $zreadTotals['cash_to_remit'] = $zreadTotals['cash_sales'] + $zreadTotals['collections_cash'] - $zreadTotals['expenses'];
 
+        // Category breakdown helper (ice / water / other)
+        $salesByCategory = function (string $date): array {
+            return DB::table('sale_items')
+                ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
+                ->join('products', 'products.id', '=', 'sale_items.product_id')
+                ->whereDate('sales.sale_date', $date)
+                ->where('sales.status', 'completed')
+                ->selectRaw('products.category, SUM(sale_items.subtotal) as total')
+                ->groupBy('products.category')
+                ->pluck('total', 'category')
+                ->toArray();
+        };
+
+        $zreadCats = $salesByCategory($zreadDate);
+        $zreadTotals['ice_sales']    = (float) ($zreadCats['ice']   ?? 0);
+        $zreadTotals['water_sales']  = (float) ($zreadCats['water'] ?? 0);
+        $zreadTotals['others_sales'] = (float) ($zreadCats['other'] ?? 0);
+
         // Dashboard per-day report
         $dashboardTotals = [
             'sales' => (float) Sale::query()->whereDate('sale_date', $dashboardDate)->where('status', 'completed')->sum('total_amount'),
@@ -108,6 +127,11 @@ class PosController extends Controller
             'collections_gcash' => (float) CollectionPayment::query()->whereDate('payment_date', $dashboardDate)->where('payment_method', 'gcash')->sum('amount'),
         ];
         $dashboardTotals['cash_to_remit'] = $dashboardTotals['cash_sales'] + $dashboardTotals['collections_cash'] - $dashboardTotals['expenses'];
+
+        $dashCats = $salesByCategory($dashboardDate);
+        $dashboardTotals['ice_sales']    = (float) ($dashCats['ice']   ?? 0);
+        $dashboardTotals['water_sales']  = (float) ($dashCats['water'] ?? 0);
+        $dashboardTotals['others_sales'] = (float) ($dashCats['other'] ?? 0);
 
         $unpaidBalances = Sale::query()
             ->select('customer_id')
