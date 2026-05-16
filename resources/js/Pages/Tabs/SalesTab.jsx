@@ -1,4 +1,4 @@
-import { FiSettings, FiEdit2 } from 'react-icons/fi';
+import { FiSettings, FiEdit2, FiAlertTriangle } from 'react-icons/fi';
 import { Input, Select, money } from '@/Components/PosUI';
 
 export default function SalesTab({
@@ -7,6 +7,7 @@ export default function SalesTab({
     productsById,
     products,
     customers,
+    borrowedContainers,
     selectedProduct,
     setSelectedProduct,
     posQty,
@@ -21,6 +22,14 @@ export default function SalesTab({
     openAddProduct,
     openEditProduct,
 }) {
+    const containerLabel = (type) =>
+        type.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+
+    const customerContainers = salesForm.data.customer_id
+        ? (borrowedContainers || []).filter(
+              (row) => String(row.customer_id) === String(salesForm.data.customer_id),
+          )
+        : [];
     return (
         <section className="space-y-4">
             {/* Header row */}
@@ -57,6 +66,20 @@ export default function SalesTab({
                         ]}
                     />
                 </div>
+                {customerContainers.length > 0 && (
+                    <div className="mt-3 flex flex-wrap items-center gap-3 rounded-md border border-amber-300 bg-amber-50 px-4 py-2">
+                        <FiAlertTriangle className="shrink-0 text-amber-500" size={16} />
+                        <span className="text-sm font-semibold text-amber-800">Borrowed Containers Outstanding:</span>
+                        {customerContainers.map((row) => (
+                            <span
+                                key={`${row.customer_id}-${row.container_type}`}
+                                className="rounded-full bg-amber-200 px-3 py-0.5 text-sm font-bold text-amber-900"
+                            >
+                                {containerLabel(row.container_type)}: {row.outstanding}
+                            </span>
+                        ))}
+                    </div>
+                )}
             </div>
 
             {/* Product grid */}
