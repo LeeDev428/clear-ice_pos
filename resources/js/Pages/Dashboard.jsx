@@ -803,6 +803,7 @@ export default function Dashboard({
                         productsById={productsById}
                         products={products}
                         customers={customers}
+                        borrowedContainers={borrowedContainers}
                         selectedProduct={selectedProduct}
                         setSelectedProduct={setSelectedProduct}
                         posQty={posQty}
