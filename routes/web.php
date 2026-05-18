@@ -54,6 +54,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Payroll
     Route::post('/payroll-entries', [PayrollController::class, 'store'])->name('payroll.store');
+    Route::patch('/payroll-entries/{payrollEntry}', [PayrollController::class, 'update'])->name('payroll-entries.update');
+    Route::delete('/payroll-entries/{payrollEntry}', [PayrollController::class, 'destroy'])->name('payroll-entries.destroy');
     Route::post('/payroll/finalize', [PayrollController::class, 'finalize'])->name('payroll.finalize');
 
     // Employees (CRUD)
