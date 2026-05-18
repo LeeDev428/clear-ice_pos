@@ -88,6 +88,72 @@ class PayrollController extends Controller
         return redirect()->route('dashboard')->with('success', 'Payroll entry saved successfully.');
     }
 
+    public function update(Request $request, PayrollEntry $payrollEntry): RedirectResponse
+    {
+        $validated = $request->validate([
+            'entry_date'           => ['required', 'date'],
+            'employee_id'          => ['nullable', 'exists:employees,id'],
+            'shift_type'           => ['nullable', Rule::in(['full_day', 'half_day'])],
+            'expected_in'          => ['nullable', 'date_format:H:i'],
+            'actual_in'            => ['nullable', 'date_format:H:i'],
+            'actual_out'           => ['nullable', 'date_format:H:i'],
+            'lunch_break_minutes'  => ['nullable', 'integer', 'min:0'],
+            'ot_hours'             => ['nullable', 'numeric', 'min:0'],
+            'ot_approved'          => ['nullable', 'boolean'],
+            'bonus'                => ['nullable', 'numeric', 'min:0'],
+            'notes'                => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $lateMinutes  = 0;
+        $lateDeduction = 0.0;
+
+        if (
+            ! empty($validated['expected_in'])
+            && ! empty($validated['actual_in'])
+            && ! empty($validated['employee_id'])
+        ) {
+            $expected    = strtotime('2000-01-01 ' . $validated['expected_in']);
+            $actual      = strtotime('2000-01-01 ' . $validated['actual_in']);
+            $diffMinutes = (int) max(0, ($actual - $expected) / 60);
+
+            if ($diffMinutes > 0) {
+                $lateMinutes = $diffMinutes;
+                $units       = (int) floor($diffMinutes / 30);
+                $employee    = Employee::find($validated['employee_id']);
+                $ratePerUnit = (float) ($employee->late_rate ?? 0);
+                if ($ratePerUnit == 0.0) {
+                    $ratePerUnit = (float) ($employee->daily_rate ?? 0) / 16;
+                }
+                $lateDeduction = $units * $ratePerUnit;
+            }
+        }
+
+        $payrollEntry->update([
+            'entry_date'           => $validated['entry_date'],
+            'employee_id'          => $validated['employee_id'] ?? $payrollEntry->employee_id,
+            'shift_type'           => $validated['shift_type'] ?? null,
+            'expected_in'          => $validated['expected_in'] ?? null,
+            'actual_in'            => $validated['actual_in'] ?? null,
+            'actual_out'           => $validated['actual_out'] ?? null,
+            'lunch_break_minutes'  => (int) ($validated['lunch_break_minutes'] ?? 0),
+            'ot_hours'             => (float) ($validated['ot_hours'] ?? 0),
+            'ot_approved'          => (bool) ($validated['ot_approved'] ?? false),
+            'bonus'                => (float) ($validated['bonus'] ?? 0),
+            'late_minutes'         => $lateMinutes,
+            'late_deduction'       => $lateDeduction,
+            'notes'                => $validated['notes'] ?? null,
+        ]);
+
+        return redirect()->route('dashboard')->with('success', 'Time log updated successfully.');
+    }
+
+    public function destroy(PayrollEntry $payrollEntry): RedirectResponse
+    {
+        $payrollEntry->delete();
+
+        return redirect()->route('dashboard')->with('success', 'Time log deleted successfully.');
+    }
+
     /**
      * Finalize payroll: post net pay as salary expense + settle cash advances.
      */
