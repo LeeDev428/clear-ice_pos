@@ -111,6 +111,7 @@ export default function Dashboard({
     const [editSaleTarget, setEditSaleTarget] = useState(null);
     const [showEditExpenseModal, setShowEditExpenseModal] = useState(false);
     const [editExpenseTarget, setEditExpenseTarget] = useState(null);
+    const [editingTimeLog, setEditingTimeLog] = useState(null);
     const [recordsSearch, setRecordsSearch] = useState('');
     const [containerSearch, setContainerSearch] = useState('');
     const [showPrintReceipt, setShowPrintReceipt] = useState(false);
@@ -435,10 +436,62 @@ export default function Dashboard({
             ot_approved: Boolean(data.ot_approved),
             amount: Number(data.amount || 0),
         }));
-        payrollForm.post(route('payroll.store'), {
-            preserveScroll: true,
-            onSuccess: () => { payrollForm.reset('amount', 'notes', 'actual_in', 'actual_out'); showToast('Time log added'); },
+        if (editingTimeLog) {
+            payrollForm.patch(route('payroll-entries.update', editingTimeLog.id), {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setEditingTimeLog(null);
+                    payrollForm.reset('amount', 'notes', 'actual_in', 'actual_out');
+                    showToast('Time log updated');
+                },
+            });
+        } else {
+            payrollForm.post(route('payroll.store'), {
+                preserveScroll: true,
+                onSuccess: () => { payrollForm.reset('amount', 'notes', 'actual_in', 'actual_out'); showToast('Time log added'); },
+            });
+        }
+    };
+
+    const openEditTimeLog = (entry) => {
+        setEditingTimeLog(entry);
+        payrollForm.setData({
+            entry_date: (entry.entry_date || '').slice(0, 10),
+            employee_id: String(entry.employee_id || ''),
+            entry_type: 'time_log',
+            deduction_type: '',
+            shift_length: entry.shift_length || 'Full Day (100% Rate)',
+            shift_type: entry.shift_type || 'full_day',
+            expected_in: entry.expected_in || '',
+            actual_in: entry.actual_in || '',
+            actual_out: entry.actual_out || '',
+            lunch_break_minutes: entry.lunch_break_minutes ?? 0,
+            ot_hours: entry.ot_hours ?? 0,
+            ot_rate: entry.ot_rate ?? 0,
+            ot_approved: entry.ot_approved ?? false,
+            amount: entry.amount ?? '',
+            bonus: entry.bonus ?? 0,
+            notes: entry.notes || '',
         });
+    };
+
+    const cancelEditTimeLog = () => {
+        setEditingTimeLog(null);
+        payrollForm.reset();
+    };
+
+    const deleteTimeLog = (entry) => {
+        showConfirm(
+            'Delete Time Log',
+            `Delete time log for ${entry.employee?.name ?? 'employee'} on ${(entry.entry_date || '').slice(0, 10)}?`,
+            () => {
+                router.delete(route('payroll-entries.destroy', entry.id), {
+                    preserveScroll: true,
+                    onSuccess: () => showToast('Time log deleted'),
+                });
+            },
+            'Delete',
+        );
     };
 
     const loadHistory = () => {
@@ -922,6 +975,10 @@ export default function Dashboard({
                         setPayrollSubTab={setPayrollSubTab}
                         payrollForm={payrollForm}
                         submitPayroll={submitPayroll}
+                        editingTimeLog={editingTimeLog}
+                        openEditTimeLog={openEditTimeLog}
+                        cancelEditTimeLog={cancelEditTimeLog}
+                        deleteTimeLog={deleteTimeLog}
                         payrollFrom={payrollFrom}
                         setPayrollFrom={setPayrollFrom}
                         payrollTo={payrollTo}
