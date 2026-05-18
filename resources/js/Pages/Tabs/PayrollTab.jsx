@@ -6,6 +6,10 @@ export default function PayrollTab({
     setPayrollSubTab,
     payrollForm,
     submitPayroll,
+    editingTimeLog,
+    openEditTimeLog,
+    cancelEditTimeLog,
+    deleteTimeLog,
     payrollFrom,
     setPayrollFrom,
     payrollTo,
@@ -68,7 +72,20 @@ export default function PayrollTab({
             {/* Time Logs */}
             {payrollSubTab === 'time_logs' && (
                 <div className="rounded-md border border-gray-200 bg-white p-4 space-y-4">
-                    <h4 className="font-semibold text-gray-800">Log Time Entry</h4>
+                    <div className="flex items-center justify-between">
+                        <h4 className="font-semibold text-gray-800">
+                            {editingTimeLog ? '✏️ Edit Time Log Entry' : 'Log Time Entry'}
+                        </h4>
+                        {editingTimeLog && (
+                            <button
+                                type="button"
+                                onClick={cancelEditTimeLog}
+                                className="inline-flex items-center gap-1 rounded border border-gray-300 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50"
+                            >
+                                <FiX size={12} /> Cancel Edit
+                            </button>
+                        )}
+                    </div>
                     <form onSubmit={submitPayroll} className="grid grid-cols-1 gap-3 md:grid-cols-3">
                         <Input label="Date" type="date" value={payrollForm.data.entry_date} onChange={(v) => payrollForm.setData('entry_date', v)} />
                         <Select
@@ -98,7 +115,9 @@ export default function PayrollTab({
                             <textarea value={payrollForm.data.notes} onChange={(e) => payrollForm.setData('notes', e.target.value)} className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm" rows={2} />
                         </div>
                         <div className="md:col-span-3">
-                            <button type="submit" disabled={payrollForm.processing} className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50">SAVE TIME LOG</button>
+                            <button type="submit" disabled={payrollForm.processing} className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
+                                {editingTimeLog ? 'UPDATE TIME LOG' : 'SAVE TIME LOG'}
+                            </button>
                         </div>
                     </form>
                     <div className="mb-3 flex flex-wrap items-end gap-3">
@@ -108,21 +127,59 @@ export default function PayrollTab({
                             <FiRefreshCw /> View
                         </button>
                     </div>
-                    <DataTable
-                        title="Time Log Entries"
-                        icon={<FiUsers />}
-                        headers={['Date', 'Employee', 'Shift', 'Exp IN', 'Act IN', 'OT', 'Bonus', 'Late Deduction']}
-                        rows={payrollToday.filter((r) => r.entry_type === 'time_log').map((row) => [
-                            (row.entry_date || '').slice(0, 10),
-                            row.employee?.name ?? '-',
-                            row.shift_type === 'half_day' ? 'Half' : 'Full',
-                            row.expected_in ?? '-',
-                            row.actual_in ?? '-',
-                            row.ot_hours ?? 0,
-                            money(row.bonus ?? 0),
-                            money(row.late_deduction ?? 0),
-                        ])}
-                    />
+                    <div className="overflow-x-auto">
+                        <table className="w-full border-collapse text-sm">
+                            <thead>
+                                <tr className="bg-gray-100 text-left text-gray-700">
+                                    <th className="px-3 py-2">Date</th>
+                                    <th className="px-3 py-2">Employee</th>
+                                    <th className="px-3 py-2">Shift</th>
+                                    <th className="px-3 py-2">Exp IN</th>
+                                    <th className="px-3 py-2">Act IN</th>
+                                    <th className="px-3 py-2">OT</th>
+                                    <th className="px-3 py-2">Bonus</th>
+                                    <th className="px-3 py-2">Late Ded.</th>
+                                    <th className="px-3 py-2">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {payrollToday.filter((r) => r.entry_type === 'time_log').length === 0 ? (
+                                    <tr><td colSpan={9} className="px-3 py-4 text-center text-gray-400">No entries found</td></tr>
+                                ) : (
+                                    payrollToday.filter((r) => r.entry_type === 'time_log').map((row) => (
+                                        <tr key={row.id} className={`border-t border-gray-200 ${editingTimeLog?.id === row.id ? 'bg-blue-50' : ''}`}>
+                                            <td className="px-3 py-2">{(row.entry_date || '').slice(0, 10)}</td>
+                                            <td className="px-3 py-2">{row.employee?.name ?? '-'}</td>
+                                            <td className="px-3 py-2">{row.shift_type === 'half_day' ? 'Half' : 'Full'}</td>
+                                            <td className="px-3 py-2">{row.expected_in ?? '-'}</td>
+                                            <td className="px-3 py-2">{row.actual_in ?? '-'}</td>
+                                            <td className="px-3 py-2">{row.ot_hours ?? 0}</td>
+                                            <td className="px-3 py-2">{money(row.bonus ?? 0)}</td>
+                                            <td className="px-3 py-2">{money(row.late_deduction ?? 0)}</td>
+                                            <td className="px-3 py-2">
+                                                <div className="flex gap-1">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => openEditTimeLog(row)}
+                                                        className="inline-flex items-center gap-1 rounded border border-blue-300 px-2 py-1 text-xs text-blue-700 hover:bg-blue-50"
+                                                    >
+                                                        <FiEdit2 size={10} /> Edit
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => deleteTimeLog(row)}
+                                                        className="inline-flex items-center gap-1 rounded border border-red-300 px-2 py-1 text-xs text-red-700 hover:bg-red-50"
+                                                    >
+                                                        <FiX size={10} /> Delete
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             )}
 
