@@ -163,6 +163,11 @@ class SaleController extends Controller
             'voided_by' => $request->user()?->id,
         ]);
 
+        // Reverse any container borrows that were auto-created by this sale
+        ContainerMovement::where('sale_id', $sale->id)
+            ->where('movement_type', 'borrow')
+            ->delete();
+
         return redirect()->route('dashboard')->with('success', 'Sale voided successfully.');
     }
 
