@@ -454,6 +454,7 @@ export default function Dashboard({
     };
 
     const openEditTimeLog = (entry) => {
+        const trimTime = (t) => (t ? String(t).slice(0, 5) : '');
         setEditingTimeLog(entry);
         payrollForm.setData({
             entry_date: (entry.entry_date || '').slice(0, 10),
@@ -462,9 +463,9 @@ export default function Dashboard({
             deduction_type: '',
             shift_length: entry.shift_length || 'Full Day (100% Rate)',
             shift_type: entry.shift_type || 'full_day',
-            expected_in: entry.expected_in || '',
-            actual_in: entry.actual_in || '',
-            actual_out: entry.actual_out || '',
+            expected_in: trimTime(entry.expected_in),
+            actual_in: trimTime(entry.actual_in),
+            actual_out: trimTime(entry.actual_out),
             lunch_break_minutes: entry.lunch_break_minutes ?? 0,
             ot_hours: entry.ot_hours ?? 0,
             ot_rate: entry.ot_rate ?? 0,
