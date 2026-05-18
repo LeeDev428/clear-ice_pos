@@ -90,6 +90,13 @@ class PayrollController extends Controller
 
     public function update(Request $request, PayrollEntry $payrollEntry): RedirectResponse
     {
+        // Normalize time fields — MySQL returns HH:MM:SS but validation expects HH:MM
+        foreach (['expected_in', 'actual_in', 'actual_out'] as $tf) {
+            if ($request->filled($tf)) {
+                $request->merge([$tf => substr((string) $request->input($tf), 0, 5)]);
+            }
+        }
+
         $validated = $request->validate([
             'entry_date'           => ['required', 'date'],
             'employee_id'          => ['nullable', 'exists:employees,id'],
