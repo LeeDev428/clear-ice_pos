@@ -645,6 +645,11 @@ export default function Dashboard({
     };
 
     const openEditExpenseModal = (expense) => {
+        if (expense.is_salary_payment || expense.is_cash_advance) {
+            showToast('Auto-posted payroll expenses cannot be edited here.', 'error');
+            return;
+        }
+
         setEditExpenseTarget(expense);
         editExpenseForm.setData({
             category: expense.category || '',
@@ -660,14 +665,27 @@ export default function Dashboard({
         editExpenseForm.patch(route('expenses.update', editExpenseTarget.id), {
             preserveScroll: true,
             onSuccess: () => { setShowEditExpenseModal(false); showToast('Expense updated'); },
+            onError: (errors) => showToast(errors.expense || 'Unable to update expense.', 'error'),
         });
     };
 
     const deleteExpense = (expense) => {
+        if (expense.is_salary_payment || expense.is_cash_advance) {
+            showToast('This expense is auto-posted from Payroll and cannot be deleted here.', 'error');
+            return;
+        }
+
         showConfirm(
             'Delete Expense',
             `Are you sure you want to permanently delete "${expense.description}" (${money(expense.amount)})? This action cannot be undone.`,
-            () => { setConfirmDialog(null); router.delete(route('expenses.destroy', expense.id), { preserveScroll: true, onSuccess: () => showToast('Expense deleted') }); },
+            () => {
+                setConfirmDialog(null);
+                router.delete(route('expenses.destroy', expense.id), {
+                    preserveScroll: true,
+                    onSuccess: () => showToast('Expense deleted'),
+                    onError: (errors) => showToast(errors.expense || 'Unable to delete expense.', 'error'),
+                });
+            },
             'Delete'
         );
     };
