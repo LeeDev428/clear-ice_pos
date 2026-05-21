@@ -201,17 +201,26 @@ export default function ExpensesTab({
                                         <td className="px-3 py-2">{money(expense.amount)}</td>
                                         <td className="px-3 py-2 uppercase">{expense.payment_source}</td>
                                         <td className="px-3 py-2 flex gap-2">
+                                            {(expense.is_salary_payment || expense.is_cash_advance) && (
+                                                <span className="rounded-md bg-gray-100 px-2 py-1 text-xs text-gray-600">
+                                                    Auto-posted from Payroll
+                                                </span>
+                                            )}
                                             <button
                                                 type="button"
                                                 onClick={() => openEditExpenseModal(expense)}
-                                                className="inline-flex items-center gap-1 rounded-md border border-blue-300 px-2 py-1 text-xs text-blue-700 hover:bg-blue-50"
+                                                disabled={expense.is_salary_payment || expense.is_cash_advance}
+                                                title={expense.is_salary_payment || expense.is_cash_advance ? 'This expense is auto-posted from Payroll and cannot be edited here.' : 'Edit'}
+                                                className="inline-flex items-center gap-1 rounded-md border border-blue-300 px-2 py-1 text-xs text-blue-700 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
                                             >
                                                 <FiEdit2 size={12} /> Edit
                                             </button>
                                             <button
                                                 type="button"
                                                 onClick={() => deleteExpense(expense)}
-                                                className="inline-flex items-center gap-1 rounded-md border border-red-300 px-2 py-1 text-xs text-red-700 hover:bg-red-50"
+                                                disabled={expense.is_salary_payment || expense.is_cash_advance}
+                                                title={expense.is_salary_payment || expense.is_cash_advance ? 'This expense is auto-posted from Payroll and cannot be deleted here.' : 'Delete'}
+                                                className="inline-flex items-center gap-1 rounded-md border border-red-300 px-2 py-1 text-xs text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
                                             >
                                                 <FiX size={12} /> Delete
                                             </button>
