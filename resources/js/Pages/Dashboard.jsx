@@ -308,8 +308,9 @@ export default function Dashboard({
             const otEarned = Number(log.ot_hours || 0) * Number(emp.ot_rate || 0);
             const bonus = Number(log.bonus || 0);
             const late = Number(log.late_deduction || 0);
-            const earned = dayEarned + otEarned + bonus - late;
-            grossPay += earned;
+            const earnedBeforeLate = dayEarned + otEarned + bonus;
+            const earned = earnedBeforeLate - late;
+            grossPay += earnedBeforeLate;
             totalLateDeduction += late;
             return { log, dayEarned, otEarned, bonus, late, earned, isHalf };
         });
