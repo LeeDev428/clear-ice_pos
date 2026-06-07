@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useForm } from '@inertiajs/react';
 import { FiEdit2, FiX, FiRefreshCw, FiPlus, FiTrash2, FiTag } from 'react-icons/fi';
-import { Input, Select, money } from '@/Components/PosUI';
+import { Input, Select, money, fmtDate } from '@/Components/PosUI';
 
 export default function ExpensesTab({
     expenseForm,
@@ -181,6 +181,7 @@ export default function ExpensesTab({
                     <table className="w-full border-collapse text-sm">
                         <thead>
                             <tr className="bg-gray-100 text-left text-gray-700">
+                                <th className="px-3 py-2">Date</th>
                                 <th className="px-3 py-2">Category</th>
                                 <th className="px-3 py-2">Description</th>
                                 <th className="px-3 py-2">Amount</th>
@@ -191,11 +192,12 @@ export default function ExpensesTab({
                         <tbody>
                             {(expensesToday || []).length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="px-3 py-4 text-center text-gray-500">No expenses today</td>
+                                    <td colSpan={6} className="px-3 py-4 text-center text-gray-500">No expenses found</td>
                                 </tr>
                             ) : (
                                 (expensesToday || []).map((expense) => (
                                     <tr key={expense.id} className="border-t border-gray-200">
+                                        <td className="px-3 py-2 whitespace-nowrap">{fmtDate(expense.expense_date)}</td>
                                         <td className="px-3 py-2">{expense.category}</td>
                                         <td className="px-3 py-2">{expense.description}</td>
                                         <td className="px-3 py-2">{money(expense.amount)}</td>
