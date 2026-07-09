@@ -50,6 +50,6 @@ class InventoryCountController extends Controller
             ]
         );
 
-        return redirect()->route('dashboard')->with('success', 'Inventory variance saved.');
+        return back()->with('success', 'Inventory variance saved.');
     }
 }
