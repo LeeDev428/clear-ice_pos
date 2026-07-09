@@ -38,7 +38,9 @@ export default function Dashboard({
     payrollFrom: payrollFromProp,
     payrollTo: payrollToProp,
     zreadDate: zreadDateProp,
-    dashboardDate: dashboardDateProp,
+    inventoryDate: inventoryDateProp,
+    dashboardFrom: dashboardFromProp,
+    dashboardTo: dashboardToProp,
     expensesFrom: expensesFromProp,
     expensesTo: expensesToProp,
     recordsFrom: recordsFromProp,
@@ -53,6 +55,7 @@ export default function Dashboard({
     recentSales,
     unpaidBalances,
     borrowedContainers,
+    totalOutstandingAmount,
     inventoryToday,
     waterRestocksToday,
     history,
@@ -61,7 +64,10 @@ export default function Dashboard({
     collectionsOnDate,
     containerReturnsOnDate,
     salesTrend,
-    topProducts,
+    soldProducts,
+    soldByType,
+    dailySalesReport,
+    dailySalesReportTotals,
     totals,
     zreadTotals,
     dashboardTotals,
@@ -89,7 +95,9 @@ export default function Dashboard({
     const [payrollFrom, setPayrollFrom] = useState(payrollFromProp || today);
     const [payrollTo, setPayrollTo] = useState(payrollToProp || today);
     const [zreadDate, setZreadDate] = useState(zreadDateProp || today);
-    const [dashboardDate, setDashboardDate] = useState(dashboardDateProp || today);
+    const [inventoryDate, setInventoryDate] = useState(inventoryDateProp || today);
+    const [dashboardFrom, setDashboardFrom] = useState(dashboardFromProp || today);
+    const [dashboardTo, setDashboardTo] = useState(dashboardToProp || today);
     const [expensesFrom, setExpensesFrom] = useState(expensesFromProp || today);
     const [expensesTo, setExpensesTo] = useState(expensesToProp || today);
     const [recordsFrom, setRecordsFrom] = useState(recordsFromProp || today);
@@ -509,7 +517,17 @@ export default function Dashboard({
     };
 
     const loadDashboard = () => {
-        router.reload({ only: ['dashboardTotals', 'dashboardDate'], data: { dashboard_date: dashboardDate } });
+        router.reload({
+            only: ['dashboardTotals', 'dashboardFrom', 'dashboardTo', 'salesTrend', 'soldProducts', 'soldByType', 'dailySalesReport', 'dailySalesReportTotals'],
+            data: { dashboard_from: dashboardFrom, dashboard_to: dashboardTo },
+        });
+    };
+
+    const loadInventory = () => {
+        router.reload({
+            only: ['inventoryToday', 'waterRestocksToday', 'inventoryDate'],
+            data: { inventory_date: inventoryDate },
+        });
     };
 
     const loadExpenses = () => {
@@ -899,6 +917,9 @@ export default function Dashboard({
                         submitInventory={submitInventory}
                         inventoryMode={inventoryMode}
                         setInventoryMode={setInventoryMode}
+                        inventoryDate={inventoryDate}
+                        setInventoryDate={setInventoryDate}
+                        loadInventory={loadInventory}
                         inventoryToday={inventoryToday}
                         waterRestocksToday={waterRestocksToday}
                         waterRestockForm={waterRestockForm}
@@ -945,8 +966,11 @@ export default function Dashboard({
                         recordsTo={recordsTo}
                         setRecordsTo={setRecordsTo}
                         loadRecords={loadRecords}
+                        totalOutstandingAmount={totalOutstandingAmount}
                         collectionsOnDate={collectionsOnDate}
                         containerReturnsOnDate={containerReturnsOnDate}
+                        setViewReceiptSale={setViewReceiptSale}
+                        setShowViewReceiptModal={setShowViewReceiptModal}
                     />
                 )}
 
@@ -967,13 +991,18 @@ export default function Dashboard({
 
                 {activeTab === 'Dashboard' && (
                     <DashboardTab
-                        dashboardDate={dashboardDate}
-                        setDashboardDate={setDashboardDate}
+                        dashboardFrom={dashboardFrom}
+                        setDashboardFrom={setDashboardFrom}
+                        dashboardTo={dashboardTo}
+                        setDashboardTo={setDashboardTo}
                         loadDashboard={loadDashboard}
                         dashboardTotals={dashboardTotals}
                         outstandingDebt={outstandingDebt}
                         salesTrend={salesTrend}
-                        topProducts={topProducts}
+                        soldProducts={soldProducts}
+                        soldByType={soldByType}
+                        dailySalesReport={dailySalesReport}
+                        dailySalesReportTotals={dailySalesReportTotals}
                     />
                 )}
 
