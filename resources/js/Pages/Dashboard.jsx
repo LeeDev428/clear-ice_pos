@@ -579,7 +579,7 @@ export default function Dashboard({
 
     const loadBalances = () => {
         router.reload({
-            only: ['unpaidBalances', 'borrowedContainers', 'balancesFrom', 'balancesTo'],
+            only: ['unpaidBalances', 'borrowedContainers', 'balancesFrom', 'balancesTo', 'totalOutstandingAmount'],
             data: { balances_from: balancesFrom, balances_to: balancesTo },
         });
     };
