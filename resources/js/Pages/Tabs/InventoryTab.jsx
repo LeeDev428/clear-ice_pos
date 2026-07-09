@@ -1,4 +1,4 @@
-import { FiBox } from 'react-icons/fi';
+import { FiBox, FiRefreshCw } from 'react-icons/fi';
 import { Input, Select, DataTable, fmtDateTime } from '@/Components/PosUI';
 
 export default function InventoryTab({
@@ -6,6 +6,9 @@ export default function InventoryTab({
     submitInventory,
     inventoryMode,
     setInventoryMode,
+    inventoryDate,
+    setInventoryDate,
+    loadInventory,
     inventoryToday,
     waterRestocksToday,
     waterRestockForm,
@@ -14,6 +17,21 @@ export default function InventoryTab({
     return (
         <section className="rounded-md border border-gray-200 bg-white p-4">
             <h3 className="mb-3 text-lg font-semibold text-gray-900">Daily Ice Variance</h3>
+            <div className="mb-3 flex flex-wrap items-end gap-2 rounded-md border border-gray-200 bg-gray-50 p-3">
+                <Input
+                    label="View Date"
+                    type="date"
+                    value={inventoryDate}
+                    onChange={setInventoryDate}
+                />
+                <button
+                    type="button"
+                    onClick={loadInventory}
+                    className="inline-flex items-center gap-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                >
+                    <FiRefreshCw size={14} /> View
+                </button>
+            </div>
             <div className="mb-4 inline-flex rounded-md border border-gray-200 p-1">
                 <button
                     type="button"
@@ -89,6 +107,7 @@ export default function InventoryTab({
                         <table className="w-full table-auto border-collapse text-sm">
                             <thead>
                                 <tr className="bg-gray-100 text-left text-gray-700">
+                                    <th className="whitespace-nowrap px-3 py-2">Count Date</th>
                                     <th className="whitespace-nowrap px-3 py-2">Ice Size</th>
                                     <th className="whitespace-nowrap px-3 py-2">Harvested</th>
                                     <th className="whitespace-nowrap px-3 py-2">Sold</th>
@@ -98,24 +117,33 @@ export default function InventoryTab({
                                 </tr>
                             </thead>
                             <tbody>
-                                {inventoryToday.map((row) => (
-                                    <tr key={row.id} className="border-t border-gray-200">
-                                        <td className="whitespace-nowrap px-3 py-2">{row.ice_size}</td>
-                                        <td className="whitespace-nowrap px-3 py-2">{row.harvested_today}</td>
-                                        <td className="whitespace-nowrap px-3 py-2">{row.sold_today}</td>
-                                        <td className="whitespace-nowrap px-3 py-2">{row.expected_count}</td>
-                                        <td className="whitespace-nowrap px-3 py-2">{row.actual_ending_count}</td>
-                                        <td
-                                            className={`whitespace-nowrap px-3 py-2 ${
-                                                Number(row.variance) > 0
-                                                    ? 'text-red-700'
-                                                    : 'text-green-700'
-                                            }`}
-                                        >
-                                            {row.variance}
+                                {(inventoryToday || []).length === 0 ? (
+                                    <tr>
+                                        <td colSpan={7} className="px-3 py-4 text-center text-gray-500">
+                                            No inventory counts found for {inventoryDate}.
                                         </td>
                                     </tr>
-                                ))}
+                                ) : (
+                                    inventoryToday.map((row) => (
+                                        <tr key={row.id} className="border-t border-gray-200">
+                                            <td className="whitespace-nowrap px-3 py-2">{String(row.count_date).slice(0, 10)}</td>
+                                            <td className="whitespace-nowrap px-3 py-2">{row.ice_size}</td>
+                                            <td className="whitespace-nowrap px-3 py-2">{row.harvested_today}</td>
+                                            <td className="whitespace-nowrap px-3 py-2">{row.sold_today}</td>
+                                            <td className="whitespace-nowrap px-3 py-2">{row.expected_count}</td>
+                                            <td className="whitespace-nowrap px-3 py-2">{row.actual_ending_count}</td>
+                                            <td
+                                                className={`whitespace-nowrap px-3 py-2 ${
+                                                    Number(row.variance) > 0
+                                                        ? 'text-red-700'
+                                                        : 'text-green-700'
+                                                }`}
+                                            >
+                                                {row.variance}
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
                             </tbody>
                         </table>
                     </div>
@@ -164,7 +192,7 @@ export default function InventoryTab({
                     </form>
 
                     <DataTable
-                        title="Water Restocks Today"
+                        title={`Water Restocks (${inventoryDate})`}
                         icon={<FiBox />}
                         headers={['Date', 'Item', 'Qty', 'Unit']}
                         rows={waterRestocksToday.map((row) => [
