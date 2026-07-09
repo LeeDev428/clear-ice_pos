@@ -27,6 +27,6 @@ class WaterRestockController extends Controller
             'recorded_by' => $request->user()?->id,
         ]);
 
-        return redirect()->route('dashboard')->with('success', 'Water restock saved successfully.');
+        return back()->with('success', 'Water restock saved successfully.');
     }
 }
