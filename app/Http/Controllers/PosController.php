@@ -15,6 +15,7 @@ use App\Models\Product;
 use App\Models\Sale;
 use App\Models\User;
 use App\Models\WaterRestock;
+use Carbon\Carbon;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -31,13 +32,19 @@ class PosController extends Controller
         $payrollFrom   = $request->query('payroll_from', $today);
         $payrollTo     = $request->query('payroll_to', $today);
         $zreadDate     = $request->query('zread_date', $today);
-        $dashboardDate = $request->query('dashboard_date', $today);
+        $inventoryDate = $request->query('inventory_date', $today);
+        $dashboardFrom = $request->query('dashboard_from', $request->query('dashboard_date', $today));
+        $dashboardTo   = $request->query('dashboard_to', $request->query('dashboard_date', $today));
         $expensesFrom  = $request->query('expenses_from', $today);
         $expensesTo    = $request->query('expenses_to', $today);
         $recordsFrom   = $request->query('records_from', $today);
         $recordsTo     = $request->query('records_to', $today);
         $balancesFrom  = $request->query('balances_from');
         $balancesTo    = $request->query('balances_to');
+
+        if ($dashboardFrom > $dashboardTo) {
+            [$dashboardFrom, $dashboardTo] = [$dashboardTo, $dashboardFrom];
+        }
 
         $products = Product::query()
             ->where('is_active', true)
@@ -99,7 +106,7 @@ class PosController extends Controller
         $zreadTotals['cash_to_remit'] = $zreadTotals['cash_sales'] + $zreadTotals['collections_cash'] - $zreadTotals['expenses'];
 
         // Category breakdown helper (ice / water / other)
-        $salesByCategory = function (string $date): array {
+        $salesByCategoryOnDate = function (string $date): array {
             return DB::table('sale_items')
                 ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
                 ->join('products', 'products.id', '=', 'sale_items.product_id')
@@ -111,27 +118,157 @@ class PosController extends Controller
                 ->toArray();
         };
 
-        $zreadCats = $salesByCategory($zreadDate);
+        $salesByCategoryInRange = function (string $from, string $to): array {
+            return DB::table('sale_items')
+                ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
+                ->join('products', 'products.id', '=', 'sale_items.product_id')
+                ->whereBetween('sales.sale_date', [$from, $to])
+                ->where('sales.status', 'completed')
+                ->selectRaw('products.category, SUM(sale_items.subtotal) as total')
+                ->groupBy('products.category')
+                ->pluck('total', 'category')
+                ->toArray();
+        };
+
+        $zreadCats = $salesByCategoryOnDate($zreadDate);
         $zreadTotals['ice_sales']    = (float) ($zreadCats['ice']   ?? 0);
         $zreadTotals['water_sales']  = (float) ($zreadCats['water'] ?? 0);
         $zreadTotals['others_sales'] = (float) ($zreadCats['other'] ?? 0);
 
-        // Dashboard per-day report
+        // Dashboard date-range report
         $dashboardTotals = [
-            'sales' => (float) Sale::query()->whereDate('sale_date', $dashboardDate)->where('status', 'completed')->sum('total_amount'),
-            'cash_sales' => (float) Sale::query()->whereDate('sale_date', $dashboardDate)->where('status', 'completed')->sum('cash_amount'),
-            'gcash_sales' => (float) Sale::query()->whereDate('sale_date', $dashboardDate)->where('status', 'completed')->sum('gcash_amount'),
-            'credit_sales' => (float) Sale::query()->whereDate('sale_date', $dashboardDate)->where('status', 'completed')->sum('credit_amount'),
-            'expenses' => (float) Expense::query()->whereDate('expense_date', $dashboardDate)->sum('amount'),
-            'collections_cash' => (float) CollectionPayment::query()->whereDate('payment_date', $dashboardDate)->where('payment_method', 'cash')->sum('amount'),
-            'collections_gcash' => (float) CollectionPayment::query()->whereDate('payment_date', $dashboardDate)->where('payment_method', 'gcash')->sum('amount'),
+            'sales' => (float) Sale::query()->whereBetween('sale_date', [$dashboardFrom, $dashboardTo])->where('status', 'completed')->sum('total_amount'),
+            'cash_sales' => (float) Sale::query()->whereBetween('sale_date', [$dashboardFrom, $dashboardTo])->where('status', 'completed')->sum('cash_amount'),
+            'gcash_sales' => (float) Sale::query()->whereBetween('sale_date', [$dashboardFrom, $dashboardTo])->where('status', 'completed')->sum('gcash_amount'),
+            'credit_sales' => (float) Sale::query()->whereBetween('sale_date', [$dashboardFrom, $dashboardTo])->where('status', 'completed')->sum('credit_amount'),
+            'expenses' => (float) Expense::query()->whereBetween('expense_date', [$dashboardFrom, $dashboardTo])->sum('amount'),
+            'collections_cash' => (float) CollectionPayment::query()->whereBetween('payment_date', [$dashboardFrom, $dashboardTo])->where('payment_method', 'cash')->sum('amount'),
+            'collections_gcash' => (float) CollectionPayment::query()->whereBetween('payment_date', [$dashboardFrom, $dashboardTo])->where('payment_method', 'gcash')->sum('amount'),
         ];
         $dashboardTotals['cash_to_remit'] = $dashboardTotals['cash_sales'] + $dashboardTotals['collections_cash'] - $dashboardTotals['expenses'];
 
-        $dashCats = $salesByCategory($dashboardDate);
+        $dashCats = $salesByCategoryInRange($dashboardFrom, $dashboardTo);
         $dashboardTotals['ice_sales']    = (float) ($dashCats['ice']   ?? 0);
         $dashboardTotals['water_sales']  = (float) ($dashCats['water'] ?? 0);
         $dashboardTotals['others_sales'] = (float) ($dashCats['other'] ?? 0);
+
+        $salesByDay = Sale::query()
+            ->whereBetween('sale_date', [$dashboardFrom, $dashboardTo])
+            ->where('status', 'completed')
+            ->selectRaw('DATE(sale_date) as report_date')
+            ->selectRaw('SUM(total_amount) as total_sales')
+            ->selectRaw('SUM(cash_amount) as cash_payment')
+            ->selectRaw('SUM(gcash_amount) as gcash_payment')
+            ->selectRaw('SUM(credit_amount) as credit')
+            ->groupByRaw('DATE(sale_date)')
+            ->get()
+            ->keyBy('report_date');
+
+        $categorySalesByDay = DB::table('sale_items')
+            ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
+            ->join('products', 'products.id', '=', 'sale_items.product_id')
+            ->whereBetween('sales.sale_date', [$dashboardFrom, $dashboardTo])
+            ->where('sales.status', 'completed')
+            ->selectRaw('DATE(sales.sale_date) as report_date, products.category, SUM(sale_items.subtotal) as total')
+            ->groupByRaw('DATE(sales.sale_date), products.category')
+            ->get()
+            ->groupBy('report_date')
+            ->map(fn ($rows) => $rows->pluck('total', 'category'));
+
+        $expensesByDay = Expense::query()
+            ->whereBetween('expense_date', [$dashboardFrom, $dashboardTo])
+            ->selectRaw('expense_date as report_date')
+            ->selectRaw("SUM(CASE WHEN payment_source = 'cash' THEN amount ELSE 0 END) as expenses_cash")
+            ->selectRaw("SUM(CASE WHEN payment_source = 'gcash' THEN amount ELSE 0 END) as expenses_gcash")
+            ->selectRaw('SUM(amount) as total_expenses')
+            ->groupBy('expense_date')
+            ->get()
+            ->keyBy('report_date');
+
+        $collectionsByDay = CollectionPayment::query()
+            ->whereBetween('payment_date', [$dashboardFrom, $dashboardTo])
+            ->selectRaw('payment_date as report_date')
+            ->selectRaw("SUM(CASE WHEN payment_method = 'cash' THEN amount ELSE 0 END) as collection_cash")
+            ->selectRaw("SUM(CASE WHEN payment_method = 'gcash' THEN amount ELSE 0 END) as collection_gcash")
+            ->groupBy('payment_date')
+            ->get()
+            ->keyBy('report_date');
+
+        $dailySalesReport = collect();
+        $cursor = Carbon::parse($dashboardFrom);
+        $rangeEnd = Carbon::parse($dashboardTo);
+
+        while ($cursor->lte($rangeEnd)) {
+            $dateKey = $cursor->toDateString();
+            $salesRow = $salesByDay->get($dateKey);
+            $expensesRow = $expensesByDay->get($dateKey);
+            $collectionsRow = $collectionsByDay->get($dateKey);
+            $categoryRow = $categorySalesByDay->get($dateKey, collect());
+
+            $iceSales = (float) ($categoryRow['ice'] ?? 0);
+            $waterSales = (float) ($categoryRow['water'] ?? 0);
+            $otherSales = (float) ($categoryRow['other'] ?? 0);
+            $totalSales = (float) ($salesRow->total_sales ?? 0);
+            $expensesCash = (float) ($expensesRow->expenses_cash ?? 0);
+            $expensesGcash = (float) ($expensesRow->expenses_gcash ?? 0);
+            $totalExpenses = (float) ($expensesRow->total_expenses ?? 0);
+            $cashPayment = (float) ($salesRow->cash_payment ?? 0);
+            $gcashPayment = (float) ($salesRow->gcash_payment ?? 0);
+            $credit = (float) ($salesRow->credit ?? 0);
+            $collectionCash = (float) ($collectionsRow->collection_cash ?? 0);
+            $collectionGcash = (float) ($collectionsRow->collection_gcash ?? 0);
+
+            $dailySalesReport->push([
+                'date' => $dateKey,
+                'ice_sales' => $iceSales,
+                'water_sales' => $waterSales,
+                'other_sales' => $otherSales,
+                'total_sales' => $totalSales,
+                'expenses_cash' => $expensesCash,
+                'expenses_gcash' => $expensesGcash,
+                'total_expenses' => $totalExpenses,
+                'gross_income' => $totalSales - $totalExpenses,
+                'cash_payment' => $cashPayment,
+                'gcash_payment' => $gcashPayment,
+                'credit' => $credit,
+                'collection_cash' => $collectionCash,
+                'collection_gcash' => $collectionGcash,
+                'cash_remit' => $cashPayment + $collectionCash - $expensesCash,
+            ]);
+
+            $cursor->addDay();
+        }
+
+        $dailySalesReportTotals = [
+            'ice_sales' => (float) $dailySalesReport->sum('ice_sales'),
+            'water_sales' => (float) $dailySalesReport->sum('water_sales'),
+            'other_sales' => (float) $dailySalesReport->sum('other_sales'),
+            'total_sales' => (float) $dailySalesReport->sum('total_sales'),
+            'expenses_cash' => (float) $dailySalesReport->sum('expenses_cash'),
+            'expenses_gcash' => (float) $dailySalesReport->sum('expenses_gcash'),
+            'total_expenses' => (float) $dailySalesReport->sum('total_expenses'),
+            'gross_income' => (float) $dailySalesReport->sum('gross_income'),
+            'cash_payment' => (float) $dailySalesReport->sum('cash_payment'),
+            'gcash_payment' => (float) $dailySalesReport->sum('gcash_payment'),
+            'credit' => (float) $dailySalesReport->sum('credit'),
+            'collection_cash' => (float) $dailySalesReport->sum('collection_cash'),
+            'collection_gcash' => (float) $dailySalesReport->sum('collection_gcash'),
+            'cash_remit' => (float) $dailySalesReport->sum('cash_remit'),
+        ];
+
+        $unpaidSales = Sale::query()
+            ->with(['customer:id,name', 'items.product:id,name,price', 'recorder:id,name'])
+            ->whereNotNull('customer_id')
+            ->where('status', 'completed')
+            ->whereRaw('credit_amount > paid_credit_amount')
+            ->when($balancesFrom && $balancesTo, function ($q) use ($balancesFrom, $balancesTo) {
+                $q->whereBetween('sale_date', [$balancesFrom, $balancesTo]);
+            })
+            ->orderBy('sale_date')
+            ->orderBy('id')
+            ->get();
+
+        $unpaidSalesByCustomer = $unpaidSales->groupBy('customer_id');
 
         $unpaidBalances = Sale::query()
             ->select('customer_id')
@@ -144,7 +281,14 @@ class PosController extends Controller
             ->groupBy('customer_id')
             ->havingRaw('SUM(credit_amount - paid_credit_amount) > 0')
             ->with('customer:id,name')
-            ->get();
+            ->get()
+            ->map(function ($row) use ($unpaidSalesByCustomer) {
+                $row->unpaid_sales = ($unpaidSalesByCustomer->get($row->customer_id) ?? collect())->values();
+
+                return $row;
+            });
+
+        $totalOutstandingAmount = (float) $unpaidBalances->sum('outstanding');
 
         $borrowedContainers = ContainerMovement::query()
             ->select('customer_id', 'container_type')
@@ -167,12 +311,12 @@ class PosController extends Controller
             });
 
         $inventoryToday = InventoryCount::query()
-            ->whereDate('count_date', $today)
+            ->whereDate('count_date', $inventoryDate)
             ->orderBy('ice_size')
             ->get();
 
         $waterRestocksToday = WaterRestock::query()
-            ->whereDate('restock_date', $today)
+            ->whereDate('restock_date', $inventoryDate)
             ->latest('id')
             ->get();
 
@@ -232,8 +376,6 @@ class PosController extends Controller
                 ->get();
         }
 
-        $startDate = now()->subDays(6)->toDateString();
-
         $users = User::query()
             ->orderBy('name')
             ->get(['id', 'name', 'email', 'is_active']);
@@ -241,22 +383,34 @@ class PosController extends Controller
         $salesTrend = Sale::query()
             ->selectRaw('DATE(sale_date) as date')
             ->selectRaw('SUM(total_amount) as total')
-            ->whereBetween('sale_date', [$startDate, $today])
+            ->whereBetween('sale_date', [$dashboardFrom, $dashboardTo])
             ->where('status', 'completed')
             ->groupByRaw('DATE(sale_date)')
             ->orderByRaw('DATE(sale_date)')
             ->get();
 
-        $topProducts = Product::query()
+        $soldProducts = Product::query()
             ->join('sale_items', 'sale_items.product_id', '=', 'products.id')
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
-            ->whereBetween('sales.sale_date', [$startDate, $today])
+            ->whereBetween('sales.sale_date', [$dashboardFrom, $dashboardTo])
             ->where('sales.status', 'completed')
-            ->select('products.id', 'products.name')
+            ->select('products.id', 'products.name', 'products.category')
             ->selectRaw('SUM(sale_items.quantity) as sold_qty')
-            ->groupBy('products.id', 'products.name')
+            ->selectRaw('SUM(sale_items.subtotal) as sold_amount')
+            ->groupBy('products.id', 'products.name', 'products.category')
             ->orderByDesc('sold_qty')
-            ->limit(5)
+            ->get();
+
+        $soldByType = DB::table('sale_items')
+            ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
+            ->join('products', 'products.id', '=', 'sale_items.product_id')
+            ->whereBetween('sales.sale_date', [$dashboardFrom, $dashboardTo])
+            ->where('sales.status', 'completed')
+            ->selectRaw('products.category as type')
+            ->selectRaw('SUM(sale_items.quantity) as sold_qty')
+            ->selectRaw('SUM(sale_items.subtotal) as sold_amount')
+            ->groupBy('products.category')
+            ->orderBy('products.category')
             ->get();
 
         return Inertia::render('Dashboard', [
@@ -273,6 +427,8 @@ class PosController extends Controller
             'borrowedContainers' => $borrowedContainers,
             'balancesFrom' => $balancesFrom,
             'balancesTo' => $balancesTo,
+            'totalOutstandingAmount' => $totalOutstandingAmount,
+            'inventoryDate' => $inventoryDate,
             'inventoryToday' => $inventoryToday,
             'waterRestocksToday' => $waterRestocksToday,
             'history' => $history,
@@ -290,11 +446,15 @@ class PosController extends Controller
             'recordsFrom' => $recordsFrom,
             'recordsTo' => $recordsTo,
             'salesTrend' => $salesTrend,
-            'topProducts' => $topProducts,
+            'soldProducts' => $soldProducts,
+            'soldByType' => $soldByType,
+            'dailySalesReport' => $dailySalesReport,
+            'dailySalesReportTotals' => $dailySalesReportTotals,
             'totals' => $totals,
             'zreadDate' => $zreadDate,
             'zreadTotals' => $zreadTotals,
-            'dashboardDate' => $dashboardDate,
+            'dashboardFrom' => $dashboardFrom,
+            'dashboardTo' => $dashboardTo,
             'dashboardTotals' => $dashboardTotals,
             'cashAdvances' => $cashAdvances,
             'periodTimeLogs' => $periodTimeLogs,
