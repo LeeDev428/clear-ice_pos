@@ -1,4 +1,4 @@
-import { FiList, FiBox, FiSearch, FiRefreshCw } from 'react-icons/fi';
+import { FiList, FiBox, FiSearch, FiRefreshCw, FiPrinter } from 'react-icons/fi';
 import { Input, Select, money } from '@/Components/PosUI';
 
 export default function RecordsTab({
@@ -23,8 +23,11 @@ export default function RecordsTab({
     recordsTo,
     setRecordsTo,
     loadRecords,
+    totalOutstandingAmount,
     collectionsOnDate,
     containerReturnsOnDate,
+    setViewReceiptSale,
+    setShowViewReceiptModal,
 }) {
     return (
         <section className="space-y-4">
@@ -165,6 +168,10 @@ export default function RecordsTab({
                         Showing data{balancesFrom ? ` from ${balancesFrom}` : ''}{balancesTo ? ` to ${balancesTo}` : ''}
                     </p>
                 )}
+                <div className="mb-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm">
+                    <span className="font-semibold text-red-900">Total Outstanding Amount: </span>
+                    <span className="font-bold text-red-900">{money(totalOutstandingAmount || 0)}</span>
+                </div>
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                     <div>
                         <h4 className="mb-2 flex items-center gap-2 text-base font-semibold text-gray-900">
@@ -188,6 +195,7 @@ export default function RecordsTab({
                                     <tr className="bg-gray-100 text-left text-gray-700">
                                         <th className="px-3 py-2">Customer</th>
                                         <th className="px-3 py-2">Outstanding</th>
+                                        <th className="px-3 py-2">Unpaid Receipts</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -199,13 +207,35 @@ export default function RecordsTab({
                                             <tr key={`ub-${i}`} className="border-t border-gray-200">
                                                 <td className="px-3 py-2">{row.customer?.name ?? 'Unknown'}</td>
                                                 <td className="px-3 py-2">{money(row.outstanding)}</td>
+                                                <td className="px-3 py-2">
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {(row.unpaid_sales || []).length === 0 ? (
+                                                            <span className="text-xs text-gray-500">No unpaid receipt</span>
+                                                        ) : (
+                                                            (row.unpaid_sales || []).map((sale) => (
+                                                                <button
+                                                                    key={`receipt-${sale.id}`}
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        setViewReceiptSale(sale);
+                                                                        setShowViewReceiptModal(true);
+                                                                    }}
+                                                                    className="inline-flex items-center gap-1 rounded-md border border-blue-300 px-2 py-1 text-xs text-blue-700 hover:bg-blue-50"
+                                                                    title={`View receipt #${sale.id}`}
+                                                                >
+                                                                    <FiPrinter size={11} /> #{sale.id}
+                                                                </button>
+                                                            ))
+                                                        )}
+                                                    </div>
+                                                </td>
                                             </tr>
                                         ))
                                     }
                                     {unpaidBalances.filter((row) =>
                                         !recordsSearch || (row.customer?.name || '').toLowerCase().includes(recordsSearch.toLowerCase())
                                     ).length === 0 && (
-                                        <tr><td colSpan={2} className="px-3 py-4 text-center text-gray-500">No data</td></tr>
+                                        <tr><td colSpan={3} className="px-3 py-4 text-center text-gray-500">No data</td></tr>
                                     )}
                                 </tbody>
                             </table>
