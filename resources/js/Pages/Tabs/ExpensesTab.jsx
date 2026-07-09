@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useForm } from '@inertiajs/react';
-import { FiEdit2, FiX, FiRefreshCw, FiPlus, FiTrash2, FiTag } from 'react-icons/fi';
+import { FiEdit2, FiX, FiRefreshCw, FiPlus, FiTrash2, FiTag, FiPrinter } from 'react-icons/fi';
 import { Input, Select, money, fmtDate } from '@/Components/PosUI';
 
 export default function ExpensesTab({
@@ -33,6 +33,35 @@ export default function ExpensesTab({
     };
 
     const categoryOptions = (expenseCategories || []).map((c) => ({ value: c.name, label: c.name }));
+
+    const expenseSummaryByCategory = useMemo(() => {
+        const map = new Map();
+        (expensesToday || []).forEach((expense) => {
+            const key = expense.category || 'Uncategorized';
+            map.set(key, Number(map.get(key) || 0) + Number(expense.amount || 0));
+        });
+
+        return Array.from(map.entries())
+            .map(([category, total]) => ({ category, total }))
+            .sort((a, b) => b.total - a.total);
+    }, [expensesToday]);
+
+    const paymentSourceTotals = useMemo(() => {
+        return (expensesToday || []).reduce(
+            (acc, expense) => {
+                const amount = Number(expense.amount || 0);
+                if (String(expense.payment_source).toLowerCase() === 'gcash') {
+                    acc.gcash += amount;
+                } else {
+                    acc.cash += amount;
+                }
+                acc.total += amount;
+
+                return acc;
+            },
+            { cash: 0, gcash: 0, total: 0 }
+        );
+    }, [expensesToday]);
 
     return (
         <>
@@ -176,7 +205,28 @@ export default function ExpensesTab({
                 >
                     <FiRefreshCw size={14} /> View
                 </button>
+                <button
+                    type="button"
+                    onClick={() => window.print()}
+                    className="inline-flex items-center gap-1 rounded-md bg-gray-800 px-3 py-2 text-sm text-white hover:bg-gray-900"
+                >
+                    <FiPrinter size={14} /> Print
+                </button>
             </div>
+                <div className="mb-3 grid grid-cols-1 gap-3 md:grid-cols-3">
+                    <div className="rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm">
+                        <div className="text-xs uppercase text-gray-500">Cash Expenses</div>
+                        <div className="text-base font-semibold text-gray-900">{money(paymentSourceTotals.cash)}</div>
+                    </div>
+                    <div className="rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm">
+                        <div className="text-xs uppercase text-gray-500">GCash Expenses</div>
+                        <div className="text-base font-semibold text-gray-900">{money(paymentSourceTotals.gcash)}</div>
+                    </div>
+                    <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm">
+                        <div className="text-xs uppercase text-red-700">Total Expenses</div>
+                        <div className="text-base font-bold text-red-800">{money(paymentSourceTotals.total)}</div>
+                    </div>
+                </div>
                 <div className="overflow-x-auto">
                     <table className="w-full border-collapse text-sm">
                         <thead>
@@ -232,6 +282,51 @@ export default function ExpensesTab({
                             )}
                         </tbody>
                     </table>
+                </div>
+
+                <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+                    <div className="rounded-md border border-gray-200 bg-white p-3">
+                        <h5 className="mb-2 text-sm font-semibold text-gray-800">Expense Summary by Category</h5>
+                        <div className="overflow-x-auto">
+                            <table className="w-full border-collapse text-sm">
+                                <thead>
+                                    <tr className="bg-gray-100 text-left text-gray-700">
+                                        <th className="px-3 py-2">Category</th>
+                                        <th className="px-3 py-2">Total Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {expenseSummaryByCategory.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={2} className="px-3 py-4 text-center text-gray-500">No expenses for this date coverage</td>
+                                        </tr>
+                                    ) : (
+                                        expenseSummaryByCategory.map((row) => (
+                                            <tr key={row.category} className="border-t border-gray-200">
+                                                <td className="px-3 py-2">{row.category}</td>
+                                                <td className="px-3 py-2 font-medium">{money(row.total)}</td>
+                                            </tr>
+                                        ))
+                                    )}
+                                    <tr className="border-t border-gray-300 bg-red-50 font-semibold text-red-900">
+                                        <td className="px-3 py-2">TOTAL</td>
+                                        <td className="px-3 py-2">{money(paymentSourceTotals.total)}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div className="rounded-md border border-gray-200 bg-white p-3">
+                        <h5 className="mb-2 text-sm font-semibold text-gray-800">Generated Expense Report</h5>
+                        <p className="mb-2 text-xs text-gray-500">
+                            Coverage: {expensesFrom} to {expensesTo}
+                        </p>
+                        <p className="text-sm text-gray-700">
+                            This report is automatically generated from all encoded expenses in the selected date coverage,
+                            with totals by payment source and by category.
+                        </p>
+                    </div>
                 </div>
             </div>
         </section>
