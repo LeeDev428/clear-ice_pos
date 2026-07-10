@@ -50,6 +50,9 @@ class InventoryCountController extends Controller
             ]
         );
 
-        return back()->with('success', 'Inventory variance saved.');
+        return redirect()->route('dashboard', [
+            'tab' => 'Inventory',
+            'inventory_date' => $validated['count_date'],
+        ])->with('success', 'Inventory variance saved.');
     }
 }
