@@ -390,13 +390,26 @@ export default function Dashboard({
 
     const submitInventory = (event) => {
         event.preventDefault();
+        const targetDate = inventoryForm.data.count_date || today;
         inventoryForm.transform((data) => ({
             ...data,
             beginning_sacks: Number(data.beginning_sacks || 0),
             harvested_today: Number(data.harvested_today || 0),
             actual_ending_count: Number(data.actual_ending_count || 0),
         }));
-        inventoryForm.post(route('inventory-counts.store'), { preserveScroll: true, onSuccess: () => showToast('Inventory count saved') });
+        inventoryForm.post(route('inventory-counts.store'), {
+            preserveScroll: true,
+            onSuccess: () => {
+                setInventoryDate(targetDate);
+                router.reload({
+                    only: ['inventoryToday', 'waterRestocksToday', 'inventoryDate'],
+                    data: { inventory_date: targetDate },
+                    preserveScroll: true,
+                    preserveState: true,
+                });
+                showToast('Inventory count saved');
+            },
+        });
     };
 
     const submitCollection = (event) => {
@@ -527,6 +540,8 @@ export default function Dashboard({
         router.reload({
             only: ['inventoryToday', 'waterRestocksToday', 'inventoryDate'],
             data: { inventory_date: inventoryDate },
+            preserveState: true,
+            preserveScroll: true,
         });
     };
 
