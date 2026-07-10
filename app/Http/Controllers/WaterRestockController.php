@@ -27,6 +27,9 @@ class WaterRestockController extends Controller
             'recorded_by' => $request->user()?->id,
         ]);
 
-        return back()->with('success', 'Water restock saved successfully.');
+        return redirect()->route('dashboard', [
+            'tab' => 'Inventory',
+            'inventory_date' => $validated['restock_date'],
+        ])->with('success', 'Water restock saved successfully.');
     }
 }
