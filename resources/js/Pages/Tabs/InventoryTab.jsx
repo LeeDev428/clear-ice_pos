@@ -1,9 +1,11 @@
-import { FiBox, FiRefreshCw } from 'react-icons/fi';
+import { FiBox, FiRefreshCw, FiEdit2, FiTrash2 } from 'react-icons/fi';
 import { Input, Select, DataTable, fmtDateTime } from '@/Components/PosUI';
 
 export default function InventoryTab({
     inventoryForm,
     submitInventory,
+    loadInventoryCountForEdit,
+    deleteInventoryCount,
     inventoryMode,
     setInventoryMode,
     inventoryDate,
@@ -114,12 +116,13 @@ export default function InventoryTab({
                                     <th className="whitespace-nowrap px-3 py-2">Expected</th>
                                     <th className="whitespace-nowrap px-3 py-2">Actual</th>
                                     <th className="whitespace-nowrap px-3 py-2">Variance</th>
+                                    <th className="whitespace-nowrap px-3 py-2">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {(inventoryToday || []).length === 0 ? (
                                     <tr>
-                                        <td colSpan={7} className="px-3 py-4 text-center text-gray-500">
+                                        <td colSpan={8} className="px-3 py-4 text-center text-gray-500">
                                             No inventory counts found for {inventoryDate}.
                                         </td>
                                     </tr>
@@ -140,6 +143,24 @@ export default function InventoryTab({
                                                 }`}
                                             >
                                                 {row.variance}
+                                            </td>
+                                            <td className="whitespace-nowrap px-3 py-2">
+                                                <div className="flex flex-wrap gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => loadInventoryCountForEdit(row)}
+                                                        className="inline-flex items-center gap-1 rounded-md border border-blue-300 px-2 py-1 text-xs text-blue-700 hover:bg-blue-50"
+                                                    >
+                                                        <FiEdit2 size={12} /> Edit
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => deleteInventoryCount(row)}
+                                                        className="inline-flex items-center gap-1 rounded-md border border-red-300 px-2 py-1 text-xs text-red-700 hover:bg-red-50"
+                                                    >
+                                                        <FiTrash2 size={12} /> Delete
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))
