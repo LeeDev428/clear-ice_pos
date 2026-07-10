@@ -55,4 +55,18 @@ class InventoryCountController extends Controller
             'inventory_date' => $validated['count_date'],
         ])->with('success', 'Inventory variance saved.');
     }
+
+    public function destroy(Request $request, InventoryCount $inventoryCount): RedirectResponse
+    {
+        $inventoryDate = $request->input('inventory_date')
+            ?: optional($inventoryCount->count_date)->format('Y-m-d')
+            ?: now()->toDateString();
+
+        $inventoryCount->delete();
+
+        return redirect()->route('dashboard', [
+            'tab' => 'Inventory',
+            'inventory_date' => $inventoryDate,
+        ])->with('success', 'Inventory count deleted.');
+    }
 }
