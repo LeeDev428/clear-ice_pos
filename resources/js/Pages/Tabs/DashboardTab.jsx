@@ -25,6 +25,111 @@ export default function DashboardTab({
     dailySalesReport,
     dailySalesReportTotals,
 }) {
+    const printSalesReportOnly = () => {
+        const rows = dailySalesReport || [];
+        const totals = dailySalesReportTotals || {};
+        const escapeHtml = (value) => String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+
+        const reportRowsHtml = rows.length === 0
+            ? '<tr><td colspan="15" style="padding:8px;text-align:center;color:#6b7280;">No report data found for this coverage</td></tr>'
+            : rows.map((row) => `
+                <tr>
+                    <td>${escapeHtml(row.date)}</td>
+                    <td>${money(row.ice_sales)}</td>
+                    <td>${money(row.water_sales)}</td>
+                    <td>${money(row.other_sales)}</td>
+                    <td>${money(row.total_sales)}</td>
+                    <td>${money(row.expenses_cash)}</td>
+                    <td>${money(row.expenses_gcash)}</td>
+                    <td>${money(row.total_expenses)}</td>
+                    <td>${money(row.gross_income)}</td>
+                    <td>${money(row.cash_payment)}</td>
+                    <td>${money(row.gcash_payment)}</td>
+                    <td>${money(row.credit)}</td>
+                    <td>${money(row.collection_cash)}</td>
+                    <td>${money(row.collection_gcash)}</td>
+                    <td>${money(row.cash_remit)}</td>
+                </tr>
+            `).join('');
+
+        const printWindow = window.open('', '_blank', 'width=1400,height=900');
+        if (!printWindow) {
+            window.print();
+            return;
+        }
+
+        printWindow.document.write(`
+            <html>
+                <head>
+                    <title>Auto-generated Sales Report</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 16px; color: #111827; }
+                        h1 { margin: 0 0 4px; font-size: 18px; }
+                        p { margin: 0 0 12px; color: #4b5563; font-size: 12px; }
+                        table { width: 100%; border-collapse: collapse; font-size: 11px; }
+                        th, td { border: 1px solid #d1d5db; padding: 6px; white-space: nowrap; }
+                        th { background: #f3f4f6; text-align: left; }
+                        tfoot td { font-weight: 700; background: #f9fafb; }
+                        @page { size: landscape; margin: 10mm; }
+                    </style>
+                </head>
+                <body>
+                    <h1>Auto-generated Sales Report</h1>
+                    <p>Coverage: ${escapeHtml(dashboardFrom)} to ${escapeHtml(dashboardTo)}</p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Ice</th>
+                                <th>Water</th>
+                                <th>Other</th>
+                                <th>Total Sales</th>
+                                <th>Exp (Cash)</th>
+                                <th>Exp (GCash)</th>
+                                <th>Total Exp</th>
+                                <th>Gross Income</th>
+                                <th>Cash Payment</th>
+                                <th>GCash Payment</th>
+                                <th>Credit</th>
+                                <th>Collection (Cash)</th>
+                                <th>Collection (GCash)</th>
+                                <th>Cash Remit</th>
+                            </tr>
+                        </thead>
+                        <tbody>${reportRowsHtml}</tbody>
+                        <tfoot>
+                            <tr>
+                                <td>TOTAL</td>
+                                <td>${money(totals.ice_sales || 0)}</td>
+                                <td>${money(totals.water_sales || 0)}</td>
+                                <td>${money(totals.other_sales || 0)}</td>
+                                <td>${money(totals.total_sales || 0)}</td>
+                                <td>${money(totals.expenses_cash || 0)}</td>
+                                <td>${money(totals.expenses_gcash || 0)}</td>
+                                <td>${money(totals.total_expenses || 0)}</td>
+                                <td>${money(totals.gross_income || 0)}</td>
+                                <td>${money(totals.cash_payment || 0)}</td>
+                                <td>${money(totals.gcash_payment || 0)}</td>
+                                <td>${money(totals.credit || 0)}</td>
+                                <td>${money(totals.collection_cash || 0)}</td>
+                                <td>${money(totals.collection_gcash || 0)}</td>
+                                <td>${money(totals.cash_remit || 0)}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+    };
+
     return (
         <section className="space-y-4">
             <div className="flex flex-wrap items-end gap-3 rounded-md border border-gray-200 bg-white p-3">
@@ -39,10 +144,10 @@ export default function DashboardTab({
                 </button>
                 <button
                     type="button"
-                    onClick={() => window.print()}
+                    onClick={printSalesReportOnly}
                     className="inline-flex items-center gap-2 rounded-md bg-gray-800 px-3 py-2 text-sm text-white hover:bg-gray-900"
                 >
-                    <FiPrinter /> Print Report
+                    <FiPrinter /> Print Sales Report
                 </button>
             </div>
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
