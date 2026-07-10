@@ -49,6 +49,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Inventory / Water / Collections
     Route::post('/inventory-counts', [InventoryCountController::class, 'store'])->name('inventory-counts.store');
+    Route::delete('/inventory-counts/{inventoryCount}', [InventoryCountController::class, 'destroy'])->name('inventory-counts.destroy');
     Route::post('/water-restocks', [WaterRestockController::class, 'store'])->name('water-restocks.store');
     Route::post('/collections', [CollectionPaymentController::class, 'store'])->name('collections.store');
 
