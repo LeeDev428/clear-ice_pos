@@ -447,6 +447,37 @@ export default function Dashboard({
         });
     };
 
+    const loadInventoryCountForEdit = (row) => {
+        inventoryForm.setData({
+            count_date: String(row.count_date || '').slice(0, 10),
+            ice_size: row.ice_size || '28mm',
+            beginning_sacks: Number(row.beginning_sacks || 0),
+            harvested_today: Number(row.harvested_today || 0),
+            actual_ending_count: Number(row.actual_ending_count || 0),
+            notes: row.notes || '',
+        });
+        setInventoryMode('daily');
+        showToast('Inventory row loaded in form. Update then click CALC VARIANCE & SAVE.');
+    };
+
+    const deleteInventoryCount = (row) => {
+        const rowDate = String(row.count_date || '').slice(0, 10);
+        showConfirm(
+            'Delete Inventory Count',
+            `Delete ${row.ice_size} count on ${rowDate}? This cannot be undone.`,
+            () => {
+                router.delete(route('inventory-counts.destroy', row.id), {
+                    preserveScroll: true,
+                    data: {
+                        inventory_date: rowDate || inventoryDate,
+                    },
+                    onSuccess: () => showToast('Inventory count deleted'),
+                });
+            },
+            'Delete'
+        );
+    };
+
     const submitPayroll = (event) => {
         event.preventDefault();
         payrollForm.transform((data) => ({
@@ -930,6 +961,8 @@ export default function Dashboard({
                     <InventoryTab
                         inventoryForm={inventoryForm}
                         submitInventory={submitInventory}
+                        loadInventoryCountForEdit={loadInventoryCountForEdit}
+                        deleteInventoryCount={deleteInventoryCount}
                         inventoryMode={inventoryMode}
                         setInventoryMode={setInventoryMode}
                         inventoryDate={inventoryDate}
