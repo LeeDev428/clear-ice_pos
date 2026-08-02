@@ -275,6 +275,30 @@ export default function Dashboard({
         payment_source: 'cash',
     });
 
+    const expenseCategoryOptions = useMemo(() => {
+        return (expenseCategories || []).map((category) => ({
+            value: category.name,
+            label: category.name,
+        }));
+    }, [expenseCategories]);
+
+    const editExpenseCategoryOptions = useMemo(() => {
+        const options = [...expenseCategoryOptions];
+        const currentCategory = editExpenseForm.data.category?.trim();
+
+        if (
+            currentCategory &&
+            !options.some((option) => option.value === currentCategory)
+        ) {
+            options.unshift({
+                value: currentCategory,
+                label: `${currentCategory} (current)`,
+            });
+        }
+
+        return options;
+    }, [expenseCategoryOptions, editExpenseForm.data.category]);
+
     const productsById = useMemo(() => {
         const map = {};
         products.forEach((product) => { map[product.id] = product; });
@@ -988,6 +1012,7 @@ export default function Dashboard({
                         openEditExpenseModal={openEditExpenseModal}
                         deleteExpense={deleteExpense}
                         expenseCategories={expenseCategories}
+                        expenseCategoryOptions={expenseCategoryOptions}
                     />
                 )}
 
@@ -1205,7 +1230,12 @@ export default function Dashboard({
                     <div className="w-full max-w-md rounded-md border border-gray-200 bg-white p-6 shadow-lg">
                         <h3 className="mb-3 text-base font-semibold text-gray-900">Edit Expense</h3>
                         <form onSubmit={submitEditExpense} className="space-y-3">
-                            <Select label="Category" value={editExpenseForm.data.category} onChange={(value) => editExpenseForm.setData('category', value)} options={[{ value: 'Auto Repair', label: 'Auto Repair' }, { value: 'Fuel', label: 'Fuel' }, { value: 'Utilities', label: 'Utilities' }, { value: 'Maintenance', label: 'Maintenance' }, { value: 'Supplies', label: 'Supplies' }, { value: 'Salaries', label: 'Salaries' }, { value: 'Cash Advance', label: 'Cash Advance' }, { value: 'Salary', label: 'Salary' }, { value: 'Others', label: 'Others' }]} />
+                            <Select
+                                label="Category"
+                                value={editExpenseForm.data.category}
+                                onChange={(value) => editExpenseForm.setData('category', value)}
+                                options={editExpenseCategoryOptions}
+                            />
                             <Input label="Description" value={editExpenseForm.data.description} onChange={(value) => editExpenseForm.setData('description', value)} />
                             <Input label="Amount" type="number" step="0.01" value={editExpenseForm.data.amount} onChange={(value) => editExpenseForm.setData('amount', value)} />
                             <Select label="Payment Source" value={editExpenseForm.data.payment_source} onChange={(value) => editExpenseForm.setData('payment_source', value)} options={[{ value: 'cash', label: 'Cash' }, { value: 'gcash', label: 'GCash' }]} />
