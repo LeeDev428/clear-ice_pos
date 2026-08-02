@@ -15,6 +15,7 @@ export default function ExpensesTab({
     openEditExpenseModal,
     deleteExpense,
     expenseCategories,
+    expenseCategoryOptions,
 }) {
     const [showCatModal, setShowCatModal] = useState(false);
     const catForm = useForm({ name: '' });
@@ -26,13 +27,6 @@ export default function ExpensesTab({
             onSuccess: () => catForm.reset(),
         });
     };
-
-    const removeCategory = (id) => {
-        if ((expenseCategories || []).length <= 1) return;
-        useForm().delete(route('expense-categories.destroy', id), { preserveScroll: true });
-    };
-
-    const categoryOptions = (expenseCategories || []).map((c) => ({ value: c.name, label: c.name }));
 
     const expenseSummaryByCategory = useMemo(() => {
         const map = new Map();
@@ -155,7 +149,7 @@ export default function ExpensesTab({
                     label="Category"
                     value={expenseForm.data.category}
                     onChange={(value) => expenseForm.setData('category', value)}
-                    options={categoryOptions}
+                    options={expenseCategoryOptions}
                 />
                 <Input
                     label="Description"
