@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useForm } from '@inertiajs/react';
-import { FiEdit2, FiX, FiRefreshCw, FiPlus, FiTrash2, FiTag, FiPrinter } from 'react-icons/fi';
+import { FiEdit2, FiEye, FiX, FiRefreshCw, FiPlus, FiTrash2, FiTag, FiPrinter } from 'react-icons/fi';
 import { Input, Select, money, fmtDate } from '@/Components/PosUI';
 
 export default function ExpensesTab({
@@ -18,6 +18,7 @@ export default function ExpensesTab({
     expenseCategoryOptions,
 }) {
     const [showCatModal, setShowCatModal] = useState(false);
+    const [selectedCategory, setSelectedCategory] = useState(null);
     const catForm = useForm({ name: '' });
 
     const addCategory = (e) => {
@@ -57,8 +58,165 @@ export default function ExpensesTab({
         );
     }, [expensesToday]);
 
+    const selectedCategoryExpenses = useMemo(() => {
+        if (!selectedCategory) return [];
+
+        return (expensesToday || []).filter(
+            (expense) => (expense.category || 'Uncategorized') === selectedCategory,
+        );
+    }, [expensesToday, selectedCategory]);
+
+    const selectedCategoryTotal = useMemo(
+        () => selectedCategoryExpenses.reduce(
+            (total, expense) => total + Number(expense.amount || 0),
+            0,
+        ),
+        [selectedCategoryExpenses],
+    );
+
+    const printCategoryReport = (category) => {
+        const categoryExpenses = (expensesToday || []).filter(
+            (expense) => (expense.category || 'Uncategorized') === category,
+        );
+        const categoryTotal = categoryExpenses.reduce(
+            (total, expense) => total + Number(expense.amount || 0),
+            0,
+        );
+        const escapeHtml = (value) => String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+        const rowsHtml = categoryExpenses.map((expense) => `
+            <tr>
+                <td>${escapeHtml(fmtDate(expense.expense_date))}</td>
+                <td>${escapeHtml(expense.description)}</td>
+                <td>${escapeHtml(String(expense.payment_source || '').toUpperCase())}</td>
+                <td class="amount">${escapeHtml(money(expense.amount))}</td>
+            </tr>
+        `).join('');
+        const printWindow = window.open('', '_blank', 'width=900,height=700');
+
+        if (!printWindow) {
+            window.alert('Please allow pop-ups to print this category report.');
+            return;
+        }
+
+        printWindow.document.write(`
+            <!doctype html>
+            <html>
+                <head>
+                    <title>${escapeHtml(category)} Expense Report</title>
+                    <style>
+                        body { color: #111827; font-family: Arial, sans-serif; margin: 28px; }
+                        h1 { font-size: 20px; margin: 0 0 4px; }
+                        h2 { font-size: 16px; margin: 20px 0 4px; }
+                        p { color: #4b5563; font-size: 12px; margin: 0 0 4px; }
+                        table { border-collapse: collapse; font-size: 12px; margin-top: 16px; width: 100%; }
+                        th, td { border: 1px solid #d1d5db; padding: 8px; text-align: left; }
+                        th { background: #f3f4f6; }
+                        .amount { text-align: right; white-space: nowrap; }
+                        .total td { background: #fef2f2; color: #991b1b; font-weight: 700; }
+                        @media print { body { margin: 12mm; } }
+                    </style>
+                </head>
+                <body>
+                    <h1>CLEAR ICE INC.</h1>
+                    <p>Expense Report by Category</p>
+                    <h2>${escapeHtml(category)}</h2>
+                    <p>Coverage: ${escapeHtml(expensesFrom)} to ${escapeHtml(expensesTo)}</p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Description</th>
+                                <th>Payment Source</th>
+                                <th class="amount">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rowsHtml}
+                            <tr class="total">
+                                <td colspan="3">TOTAL</td>
+                                <td class="amount">${escapeHtml(money(categoryTotal))}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+    };
+
     return (
         <>
+        {selectedCategory && (
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+                <div className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
+                    <div className="flex items-start justify-between border-b border-gray-200 px-5 py-4">
+                        <div>
+                            <h3 className="text-base font-semibold text-gray-900">{selectedCategory} Expenses</h3>
+                            <p className="mt-1 text-xs text-gray-500">Coverage: {expensesFrom} to {expensesTo}</p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setSelectedCategory(null)}
+                            className="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+                            aria-label="Close category report"
+                        >
+                            <FiX size={18} />
+                        </button>
+                    </div>
+                    <div className="overflow-auto p-5">
+                        <table className="w-full border-collapse text-sm">
+                            <thead>
+                                <tr className="bg-gray-100 text-left text-gray-700">
+                                    <th className="px-3 py-2">Date</th>
+                                    <th className="px-3 py-2">Description</th>
+                                    <th className="px-3 py-2">Payment Source</th>
+                                    <th className="px-3 py-2 text-right">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {selectedCategoryExpenses.map((expense) => (
+                                    <tr key={expense.id} className="border-t border-gray-200">
+                                        <td className="whitespace-nowrap px-3 py-2">{fmtDate(expense.expense_date)}</td>
+                                        <td className="px-3 py-2">{expense.description}</td>
+                                        <td className="px-3 py-2 uppercase">{expense.payment_source}</td>
+                                        <td className="whitespace-nowrap px-3 py-2 text-right">{money(expense.amount)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                            <tfoot>
+                                <tr className="border-t border-red-200 bg-red-50 font-semibold text-red-900">
+                                    <td colSpan={3} className="px-3 py-2">TOTAL</td>
+                                    <td className="whitespace-nowrap px-3 py-2 text-right">{money(selectedCategoryTotal)}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    <div className="flex justify-end gap-2 border-t border-gray-200 px-5 py-4">
+                        <button
+                            type="button"
+                            onClick={() => setSelectedCategory(null)}
+                            className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        >
+                            Close
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => printCategoryReport(selectedCategory)}
+                            className="inline-flex items-center gap-1 rounded-md bg-gray-800 px-3 py-2 text-sm text-white hover:bg-gray-900"
+                        >
+                            <FiPrinter size={14} /> Print Category
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
         {showCatModal && (
             <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm">
                 <div className="w-full max-w-sm rounded-2xl bg-white shadow-2xl">
@@ -287,24 +445,44 @@ export default function ExpensesTab({
                                     <tr className="bg-gray-100 text-left text-gray-700">
                                         <th className="px-3 py-2">Category</th>
                                         <th className="px-3 py-2">Total Amount</th>
+                                        <th className="px-3 py-2 text-right">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {expenseSummaryByCategory.length === 0 ? (
                                         <tr>
-                                            <td colSpan={2} className="px-3 py-4 text-center text-gray-500">No expenses for this date coverage</td>
+                                            <td colSpan={3} className="px-3 py-4 text-center text-gray-500">No expenses for this date coverage</td>
                                         </tr>
                                     ) : (
                                         expenseSummaryByCategory.map((row) => (
                                             <tr key={row.category} className="border-t border-gray-200">
                                                 <td className="px-3 py-2">{row.category}</td>
                                                 <td className="px-3 py-2 font-medium">{money(row.total)}</td>
+                                                <td className="px-3 py-2">
+                                                    <div className="flex justify-end gap-1">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setSelectedCategory(row.category)}
+                                                            className="inline-flex items-center gap-1 rounded-md border border-blue-300 px-2 py-1 text-xs text-blue-700 hover:bg-blue-50"
+                                                        >
+                                                            <FiEye size={12} /> View
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => printCategoryReport(row.category)}
+                                                            className="inline-flex items-center gap-1 rounded-md border border-gray-300 px-2 py-1 text-xs text-gray-700 hover:bg-gray-50"
+                                                        >
+                                                            <FiPrinter size={12} /> Print
+                                                        </button>
+                                                    </div>
+                                                </td>
                                             </tr>
                                         ))
                                     )}
                                     <tr className="border-t border-gray-300 bg-red-50 font-semibold text-red-900">
                                         <td className="px-3 py-2">TOTAL</td>
                                         <td className="px-3 py-2">{money(paymentSourceTotals.total)}</td>
+                                        <td className="px-3 py-2" />
                                     </tr>
                                 </tbody>
                             </table>
